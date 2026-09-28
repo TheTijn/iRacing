@@ -1,0 +1,106 @@
+@use 'tokens' as *;
+
+.scrim {
+  position: absolute; inset: 0; z-index: 35; background: rgba(2, 8, 5, 0.6);
+  backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+  opacity: 0; pointer-events: none; transition: opacity 240ms ease;
+  &.is-on { opacity: 1; pointer-events: auto; }
+}
+
+.slip {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 40;
+  display: flex; flex-direction: column;
+  padding-bottom: var(--safe-b);
+  background: linear-gradient(180deg, #16301f 0%, #0f2117 40%, #0c1b13 100%);
+  border: 1px solid var(--line-2); border-bottom: 0;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -24px 60px -24px rgba(0, 0, 0, 0.9);
+  transform: translateY(105%);
+  transition: transform 420ms $ease-drawer;
+  &.is-visible { transform: translateY(0); }
+
+  &__bar { display: block; width: 100%; padding: 8px 16px 4px; text-align: left; }
+  &__grip { display: block; width: 36px; height: 4px; border-radius: 4px; margin: 0 auto 8px; background: var(--line-2); }
+  &__top {
+    display: flex; align-items: center; gap: 8px; min-height: 28px;
+    b { font-size: 16px; font-weight: 750; letter-spacing: 0.005em; }
+  }
+  &__count {
+    display: grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 99px;
+    background: var(--accent); color: var(--accent-ink); font-size: 12px; font-weight: 800; @include num;
+  }
+  &__cost { margin-left: auto; font-size: 14px; font-weight: 600; color: var(--text-2); @include num; b { color: var(--text); } }
+  &__chev { width: 20px; height: 20px; color: var(--text-2); transition: transform 300ms $ease-out; }
+  &.is-open &__chev { transform: rotate(180deg); }
+
+  &__panel { height: 0; overflow: hidden; display: flex; flex-direction: column; }
+  &__stake { padding: 10px 16px 6px; }
+  &__stake-label { @include label(10px); display: block; margin-bottom: 8px; }
+  &__clear {
+    align-self: center; display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px; margin: 2px 0 4px;
+    color: var(--text-3); font-size: 13px; font-weight: 600;
+    svg { width: 16px; height: 16px; }
+    @include hover { color: var(--red); }
+  }
+
+  &__foot { display: flex; align-items: center; gap: 12px; padding: 6px 12px 12px 16px; }
+  &__ret { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  &__ret-label { @include label(10px); }
+  &__ret-value {
+    @include display(32px, 800, 0.01em); @include num; color: var(--gold); line-height: 1;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+}
+
+.btn--place {
+  height: 56px; min-width: 150px; padding: 0 18px; border-radius: 16px; flex-direction: column; gap: 2px;
+  &__label { font-size: 16px; font-weight: 750; line-height: 1; }
+  &__amt { font-size: 12px; font-weight: 650; opacity: 0.72; @include num; line-height: 1; }
+}
+
+.stake-chips { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)) minmax(0, 1.35fr); gap: 5px; }
+.stake-chip {
+  min-width: 0; height: 40px; padding: 0 2px; border-radius: 12px;
+  background: var(--surface); border: 1px solid var(--line-2); font-weight: 700; font-size: 14px; @include num;
+  @include press(0.94);
+  &.is-on { background: var(--text); color: var(--bg); border-color: var(--text); }
+}
+.stake-input {
+  width: 100%; min-width: 0; height: 40px; border-radius: 12px; padding: 0 4px; text-align: center;
+  background: var(--surface); border: 1px solid var(--line-2); color: var(--text);
+  font: 700 14px var(--f-ui); @include num;
+  &::placeholder { color: var(--text-3); font-weight: 600; }
+  &:focus { outline: none; border-color: var(--accent); }
+}
+
+.tickets {
+  flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 6px 12px 4px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.ticket {
+  flex: none; position: relative; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center;
+  padding: 12px 8px 12px 14px; border-radius: 16px; background: rgba(5, 13, 9, 0.5); border: 1px solid var(--line);
+
+  &__type { @include label(10px); color: var(--accent); display: flex; gap: 8px; align-items: center; em { font-style: normal; color: var(--text-3); letter-spacing: 0.04em; } }
+  &__sel { grid-column: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-weight: 650; font-size: 14.5px; min-width: 0; }
+  &__sel .sep { color: var(--text-3); font-size: 12px; }
+  &__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  &__price { grid-column: 2; grid-row: 1 / span 2; justify-self: end; text-align: right; padding-right: 40px; }
+  &__odds { @include num; font-size: 17px; font-weight: 750; display: block; }
+  &__combos { font-size: 11.5px; color: var(--text-3); }
+  &__foot { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; font-size: 12.5px; color: var(--text-3); @include num; b { color: var(--text-2); } }
+  &__rm {
+    position: absolute; top: 6px; right: 4px; width: 44px; height: 44px; display: grid; place-items: center;
+    border-radius: 12px; color: var(--text-2);
+    svg { width: 20px; height: 20px; }
+    @include press(0.9);
+    @include hover { color: var(--red); background: rgba(255, 107, 94, 0.08); }
+  }
+  &__stake { display: flex; align-items: center; gap: 6px; color: var(--text-2); }
+  &__stake input {
+    width: 64px; height: 32px; border-radius: 9px; border: 1px solid var(--line-2); background: var(--surface);
+    color: var(--text); text-align: center; font: 700 13.5px var(--f-ui); @include num;
+    &:focus { outline: none; border-color: var(--accent); }
+  }
+}
+.mini-silk { display: inline-flex; align-items: center; gap: 4px; .silk { width: 18px; height: 18px; } }

@@ -1,0 +1,35 @@
+// Design tokens. Colours live as CSS custom properties (see :root in _base); SCSS holds
+// breakpoints, easing and mixins.
+$bp-desktop: 768px;
+$ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+$ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+$ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+@mixin display($size, $weight: 800, $track: 0.01em) {
+  font-family: var(--f-display);
+  font-size: $size;
+  font-weight: $weight;
+  letter-spacing: $track;
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+
+@mixin label($size: 11px) {
+  font-family: var(--f-ui);
+  font-size: $size;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+@mixin num { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
+
+@mixin press($scale: 0.97) {
+  transition: transform 140ms $ease-out, background-color 180ms ease, color 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  &:active { transform: scale($scale); }
+}
+
+@mixin hover { @media (hover: hover) and (pointer: fine) { &:hover { @content; } } }
+
+@mixin landscape-phone { @media (orientation: landscape) and (max-height: 520px) { @content; } }

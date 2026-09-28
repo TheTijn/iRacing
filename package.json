@@ -1,0 +1,24 @@
+{
+  "name": "instant-racing",
+  "version": "1.0.0",
+  "description": "Instant Horse Racing - mobile-first instant betting game",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "sass": "sass --no-source-map --style=compressed scss/style.scss public/css/style.css",
+    "sass:watch": "sass --watch scss/style.scss public/css/style.css",
+    "races": "node scripts/build-races.mjs",
+    "transcode": "bash scripts/transcode.sh",
+    "test": "node --test scripts/*.test.mjs",
+    "start": "npm run sass && node server.js",
+    "dev": "concurrently \"npm run sass:watch\" \"node --watch server.js\""
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "sass": "^1.99.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "gsap": "^3.13.0"
+  }
+}

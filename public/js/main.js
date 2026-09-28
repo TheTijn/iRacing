@@ -1,0 +1,234 @@
+// Boot + phase machine: BETTING → RACING → REVEAL → RESULT → (Rebet | Next race).
+import { state, on, emit, $, $$ } from './state.js';
+import { CONFIG } from './data.js';
+import { settle, buildBet, BET_TYPES } from './pricing.js';
+import { loadStore, saveBalance, saveSettings, loadHistory, pushHistory, money, odds } from './store.js';
+import { buildField } from './field.js';
+import { initRaceCard, renderHeader, renderRunners } from './racecard.js';
+import { initSlip, render as renderSlip, slipCost, describeSel, betTitle, closeSlip, addBet, newId } from './betslip.js';
+import * as race from './race.js';
+import { initResults, renderResult, cancelCelebration, resultReady } from './results.js';
+import { toast, renderBalance, showView, initSheets, openSheetEl, closeSheet } from './ui.js';
+import { gsap, reducedMotion } from './fx.js';
+
+const params = new URLSearchParams(location.search);
+const forcedRace = params.get('race');   // debug: ?race=190 plays that video every time
+let bag = [];
+let lastRaceId = null;
+
+function pickRace() {
+  if (forcedRace) {
+    const r = state.races.find(x => x.id === forcedRace);
+    if (r) return r;
+  }
+  if (!bag.length) {
+    bag = state.races.slice().sort(() => Math.random() - 0.5);
+    if (bag.length > 1 && bag[bag.length - 1].id === lastRaceId) bag.unshift(bag.pop());
+  }
+  const r = bag.pop();
+  lastRaceId = r.id;
+  return r;
+}
+
+function newRace({ keepField = false } = {}) {
+  race.stop();
+  state.race = pickRace();
+  state.raceNo++;
+  if (!keepField || !state.field || state.field.horses.length !== state.race.runners) {
+    state.field = buildField(state.race.runners);
+  }
+  state.legs = [[], [], []];
+  state.placed = [];
+  state.outcome = null;
+  renderHeader();
+  renderRunners({ animate: state.phase === 'result' || state.phase === 'loading' });
+  renderBalance();
+  race.prepare(state.race);
+}
+
+const cloneBet = (b, fresh = false) => ({
+  ...b,
+  id: fresh ? newId() : b.id,
+  legs: b.legs.map(l => l.slice()),
+  combos: b.combos.map(c => ({ ...c, sel: c.sel.slice() })),
+});
+
+function placeBets(bets) {
+  const cost = slipCost(bets);
+  if (!bets.length) return false;
+  if (cost > state.balance + 1e-9) { toast(`Not enough balance (need ${money(cost)})`, true); return false; }
+  state.balance = Math.round((state.balance - cost) * 100) / 100;
+  saveBalance();
+  renderBalance({ animate: true });
+  state.placed = bets.map(b => cloneBet(b));
+  state.lastPlaced = bets.map(b => cloneBet(b));
+  state.slip = [];
+  closeSlip();
+  if (!state.settings.instant) showView('racing');
+  renderSlip();
+  race.start({ instant: state.settings.instant, onFinish: onRaceFinish });
+  return true;
+}
+
+function onRaceFinish(order, { natural = false } = {}) {
+  const { places } = state.field;
+  const bets = state.placed.map(b => ({ ...b, ret: settle(b, order, places) }));
+  const staked = slipCost(state.placed);
+  const returned = Math.round(bets.reduce((s, b) => s + b.ret, 0) * 100) / 100;
+  const outcome = { raceNo: state.raceNo, order, bets, staked, returned };
+  state.outcome = outcome;
+
+  // Credit immediately in state (display animates on the result screen)
+  state.balance = Math.round((state.balance + returned) * 100) / 100;
+  saveBalance();
+
+  pushHistory({
+    raceNo: state.raceNo, at: Date.now(), podium: order.slice(0, 3), staked, returned,
+    bets: bets.map(b => ({ id: b.id, title: betTitle(b), sel: describeSel(b), stake: b.stake * b.combos.length, ret: b.ret })),
+  });
+
+  race.afterFinish(natural ? CONFIG.finishBeatMs : 0, () => {
+    race.pauseVideo();
+    showView('result');
+    renderResult(outcome, { canRebet: slipCost(state.lastPlaced) <= state.balance + 1e-9 });
+  });
+}
+
+function rebet() {
+  const bets = state.lastPlaced.map(b => cloneBet(b, true));
+  if (slipCost(bets) > state.balance + 1e-9) { toast('Not enough balance to rebet', true); return; }
+  const oldField = state.field;
+  newRace({ keepField: true });
+  if (state.field !== oldField) { showView('betting'); return; }  // field changed: can't reuse picks
+  placeBets(bets);
+}
+
+function nextRace() {
+  newRace();
+  showView('betting');
+  renderSlip();
+  if (state.balance < CONFIG.minStake) toast('Out of demo funds — reset your balance in Settings', true);
+}
+
+// ---------- Replay ----------
+const replayEl = $('#replay');
+const replayVideo = $('#replayVideo');
+let replayBounds = null;
+function openReplay() {
+  const r = state.race;
+  if (r.replayStart == null) return;
+  replayBounds = [r.replayStart / r.fps, r.replayEnd / r.fps];
+  if (replayVideo.dataset.src !== r.src) { replayVideo.src = r.src; replayVideo.dataset.src = r.src; }
+  replayVideo.preload = 'auto';
+  replayVideo.removeEventListener('loadedmetadata', seekReplay);
+  replayVideo.play().catch(() => {});          // synchronous in the tap (iOS gesture rule)
+  if (replayVideo.readyState >= 1) seekReplay(); else replayVideo.addEventListener('loadedmetadata', seekReplay, { once: true });
+  replayEl.classList.add('is-open');
+}
+function seekReplay() { if (replayBounds) replayVideo.currentTime = replayBounds[0]; }
+function closeReplay() {
+  replayVideo.removeEventListener('loadedmetadata', seekReplay);
+  replayEl.classList.remove('is-open');
+  replayVideo.pause();
+  replayBounds = null;
+}
+replayVideo.addEventListener('timeupdate', () => {
+  if (replayBounds && replayVideo.currentTime >= replayBounds[1]) replayVideo.currentTime = replayBounds[0];
+});
+$('#btnReplayClose').addEventListener('click', closeReplay);
+replayEl.addEventListener('click', e => { if (e.target === replayEl) closeReplay(); });
+on('escape', closeReplay);
+
+// ---------- Settings ----------
+function syncSettingsUI() {
+  $$('#sheetSettings .pills').forEach(g => {
+    $$('button', g).forEach(b => b.classList.toggle('is-on', state.settings[g.dataset.setting] === b.dataset.value));
+  });
+  $$('#sheetSettings input[data-setting]').forEach(i => { i.checked = !!state.settings[i.dataset.setting]; });
+}
+function initSettings() {
+  $('#btnSettings').addEventListener('click', () => { syncSettingsUI(); openSheetEl('#sheetSettings'); });
+  $('#sheetSettings').addEventListener('click', e => {
+    const b = e.target.closest('.pills button');
+    if (!b) return;
+    state.settings[b.closest('.pills').dataset.setting] = b.dataset.value;
+    applySettings();
+  });
+  $('#sheetSettings').addEventListener('change', e => {
+    const i = e.target.closest('input[data-setting]');
+    if (!i) return;
+    state.settings[i.dataset.setting] = i.checked;
+    applySettings();
+  });
+  $('#btnResetBalance').addEventListener('click', () => {
+    state.balance = CONFIG.startBalance;
+    saveBalance();
+    renderBalance({ animate: true });
+    toast(`Demo balance reset to ${money(CONFIG.startBalance)}`);
+  });
+  on('settings:save', saveSettings);
+}
+function applySettings() {
+  saveSettings();
+  syncSettingsUI();
+  renderBalance();
+  if (state.phase === 'betting') race.prepare(state.race);
+  if (state.phase === 'racing') race.setSaver(!!state.settings.saver);
+  emit('settings:changed');
+}
+
+// ---------- History ----------
+function renderHistory() {
+  const list = loadHistory();
+  const el = $('#historyList');
+  if (!list.length) { el.innerHTML = '<li class="history__empty">No settled bets yet this session.</li>'; return; }
+  el.innerHTML = list.map(h => `
+    <li class="history__race"><span>Race ${h.raceNo} · ${new Date(h.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+      <span>1-2-3: ${h.podium.join('-')}</span></li>
+    ${h.bets.map(b => `<li class="rbet ${b.ret > 0 ? 'is-won' : 'is-lost'}">
+      <span class="rbet__type">${b.title}<em>${b.id}</em></span>
+      <div class="rbet__sel">${b.sel}</div>
+      <div class="rbet__side"><span class="rbet__ret">${b.ret > 0 ? money(b.ret) : '—'}</span><span class="rbet__stake">Stake ${money(b.stake)}</span></div>
+    </li>`).join('')}`).join('');
+}
+
+// ---------- Boot ----------
+async function init() {
+  loadStore();
+  try {
+    const res = await fetch('data/races.json');
+    state.races = (await res.json()).races;
+  } catch (e) {
+    toast('Could not load races — please refresh', true);
+    throw e;
+  }
+  initSheets();
+  initSlip();
+  initRaceCard();
+  race.initRace();
+  initSettings();
+  initResults({
+    onAction: act => {
+      // Ignore taps while the result view is still fading in/out (prevents double rebet / double deduction)
+      if (state.phase !== 'result' || (act !== 'replay' && !resultReady())) return;
+      if (act !== 'replay') cancelCelebration();
+      if (act === 'rebet') rebet();
+      else if (act === 'next') nextRace();
+      else if (act === 'replay') openReplay();
+    },
+  });
+  $('#btnHistory').addEventListener('click', () => { renderHistory(); openSheetEl('#sheetHistory'); });
+  on('slip:place', () => placeBets(state.slip));
+
+  newRace();
+  showView('betting', { instant: true });
+  renderSlip();
+  if (!reducedMotion()) {
+    gsap.from(['.topbar', '.race-head', '.markets', '.runner-head'], { y: 16, opacity: 0, duration: 0.7, ease: 'expo.out', stagger: 0.07, clearProps: 'transform,opacity' });
+  }
+}
+
+init();
+
+// Debug handle for QA in the console
+window.__ir = { state, settle, buildBet, BET_TYPES, addBet, odds };

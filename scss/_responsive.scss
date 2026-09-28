@@ -1,0 +1,51 @@
+@use 'tokens' as *;
+
+// Small phones (e.g. 360×640, iPhone SE)
+@media (max-height: 700px) {
+  .race-head { min-height: 76px; padding: 10px 14px; &__title { font-size: 32px; } &__no { font-size: 26px; } }
+  .runner { min-height: 58px; padding-top: 5px; padding-bottom: 5px; }
+  .hero__amount { font-size: clamp(56px, 19vw, 80px); }
+  .rail { padding-top: 8px; }
+  .order { margin-top: 4px; }
+  .lbet { padding: 7px 10px 7px 14px; }
+  .live { padding-top: 6px; }
+}
+@media (max-width: 359px) {
+  .odd { width: 56px; }
+  .col-w { width: 56px; }
+  .runner { gap: 10px; }
+  .btn--place { min-width: 128px; }
+}
+
+// Landscape phones: the race goes full-bleed with an overlay HUD.
+@include landscape-phone {
+  .topbar { display: none; }
+  .app { grid-template-rows: 1fr; }
+  .app[data-phase='betting'] .topbar, .app[data-phase='result'] .topbar { display: flex; }
+  .app[data-phase='betting'], .app[data-phase='result'] { grid-template-rows: auto 1fr; }
+  .view--race {
+    .stage { position: absolute; inset: 0; aspect-ratio: auto; }
+    .rail { position: absolute; left: 12px; bottom: 12px; width: 44%; padding: 10px 14px; border-radius: 14px; background: rgba(5, 13, 9, 0.72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+    .order { position: absolute; top: 52px; left: 12px; right: 12px; margin: 0; }
+    .ochip__silk { background: rgba(5, 13, 9, 0.7); }
+    .live { position: absolute; right: 12px; bottom: 76px; width: 40%; max-height: 40%; padding: 0; .live__head { display: none; } }
+    .lbet { background: rgba(13, 28, 20, 0.85); padding: 6px 10px 6px 14px; }
+    .race-actions { position: absolute; right: 12px; bottom: 12px; padding: 0; width: 40%; .btn--xl { height: 48px; } }
+    .callout { bottom: auto; top: 128px; }
+  }
+}
+
+// Desktop / tablet: a device-like shell over an atmospheric backdrop.
+@media (min-width: $bp-desktop) and (min-height: 600px) {
+  body {
+    display: grid; place-items: center; min-height: 100vh; background: var(--bg);
+    &::before, &::after { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+    &::before { background: var(--poster, none) center / cover no-repeat; filter: blur(28px) saturate(0.7); transform: scale(1.12); opacity: 0.5; }
+    &::after { background: radial-gradient(55% 60% at 50% 45%, rgba(63, 229, 140, 0.08), transparent 70%), linear-gradient(180deg, rgba(5, 13, 9, 0.55), rgba(5, 13, 9, 0.92)); }
+  }
+  .app {
+    width: 440px; height: min(100dvh - 48px, 900px); border-radius: 32px;
+    border: 1px solid var(--line-2);
+    box-shadow: 0 60px 120px -40px rgba(0, 0, 0, 0.9), 0 0 0 10px rgba(255, 255, 255, 0.02);
+  }
+}

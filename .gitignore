@@ -1,0 +1,4 @@
+node_modules/
+.DS_Store
+# Source videos (MPEG-4 Part 2, 46MB each) — transcoded copies live in public/assets/races/
+Test Videos/*.mp4
