@@ -2,8 +2,9 @@
 import { state, emit, on, $, $$ } from './state.js';
 import { BET_TYPES, betCost, maxReturn, round2 } from './pricing.js';
 import { CONFIG } from './data.js';
+import { betLabel } from './sports.js';
 import { money, odds } from './store.js';
-import { silkSVG } from './silks.js';
+import { runnerIcon } from './silks.js';
 import { gsap, reducedMotion, haptic } from './fx.js';
 import { toast } from './ui.js';
 
@@ -23,7 +24,7 @@ const simpleKey = (type, h) => `${type}:${h}`;
 // ---------- Descriptions (shared by slip, live race and results) ----------
 export function horseTag(h, { name = true } = {}) {
   const r = state.field.runners[h];
-  return `<span class="mini-silk">${silkSVG(h)}<b>#${h}</b></span>${name ? `<span class="ticket__name">${r.name}</span>` : ''}`;
+  return `<span class="mini-silk">${runnerIcon(h)}<b>#${h}</b></span>${name ? `<span class="ticket__name">${r.name}</span>` : ''}`;
 }
 
 export function describeSel(bet) {
@@ -37,7 +38,7 @@ export function describeSel(bet) {
   return legs[0].slice().sort((a, b) => a - b).map(h => horseTag(h, { name: false })).join('<span class="sep">·</span>');
 }
 
-export const betTitle = bet => `${BET_TYPES[bet.type].label}${bet.box ? ' box' : ''}`;
+export const betTitle = bet => betLabel(state.sport, bet.type, bet.box);
 
 // ---------- Slip mutations ----------
 export const hasSimple = (type, h) => state.slip.some(b => b.key === simpleKey(type, h));

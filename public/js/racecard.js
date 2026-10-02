@@ -1,9 +1,9 @@
 // Race card: header, market tabs, runner rows, Win/Place buttons and the exotic pick grid.
-import { state, on, $, $$ } from './state.js';
-import { BET_TYPES, EXOTICS, pickError, buildBet, betCost, betMaxReturn } from './pricing.js';
-import { VENUE } from './data.js';
+import { state, sport, on, $, $$ } from './state.js';
+import { BET_TYPES, pickError, buildBet, betCost, betMaxReturn } from './pricing.js';
+import { betLabel, betHint, boxToggleLabel } from './sports.js';
 import { money, odds } from './store.js';
-import { silkSVG, saddle } from './silks.js';
+import { runnerIcon, saddle } from './silks.js';
 import { gsap, reducedMotion } from './fx.js';
 import { addBet, toggleSimple, hasSimple } from './betslip.js';
 
@@ -21,8 +21,8 @@ const POS = ['1st', '2nd', '3rd'];
 
 export function renderHeader() {
   const r = state.race;
-  $('#raceTitle').textContent = VENUE.name;
-  $('#raceMeta').textContent = `${r.distance}m · ${VENUE.surface} · ${r.runners} runners`;
+  $('#raceTitle').textContent = r.venue;
+  $('#raceMeta').textContent = `${r.distance}m · ${sport().surface} · ${r.runners} runners`;
   $('#raceNo').textContent = state.raceNo;
   $('#raceHeadBg').style.backgroundImage = `url(${r.poster})`;
   document.body.style.setProperty('--poster', `url(${new URL(r.poster, location.href).href})`);
@@ -75,7 +75,7 @@ export function renderRunners({ animate = false } = {}) {
   list.innerHTML = f.byOdds.map(no => {
     const r = f.runners[no];
     return `<li class="runner" data-h="${no}">
-      <div class="runner__silk">${silkSVG(no)}${saddle(no)}</div>
+      <div class="runner__silk">${runnerIcon(no)}${saddle(no)}</div>
       <div class="runner__info">
         <div class="runner__name"><span>${r.name}</span>${no === f.favourite ? '<em class="fav">FAV</em>' : ''}</div>
         <div class="runner__meta">${formMarkup(r.form)}${ratingMarkup(r.rating)}</div>
@@ -105,12 +105,18 @@ export function syncSelections() {
 }
 
 // ---------- Exotics ----------
+const label = (type, box = false) => betLabel(state.sport, type, box);
+const hintFor = (type, box = false) => betHint(state.sport, type, { box, places: state.field?.places });
+
 function renderChips() {
-  chips.innerHTML = EXOTICS.map(t =>
-    `<button class="chip ${t === state.exoticType ? 'is-active' : ''}" role="radio" aria-checked="${t === state.exoticType}" data-type="${t}">${BET_TYPES[t].label}</button>`).join('');
+  chips.innerHTML = sport().exotics.map(t =>
+    `<button class="chip ${t === state.exoticType ? 'is-active' : ''}" role="radio" aria-checked="${t === state.exoticType}" data-type="${t}">${label(t)}</button>`).join('');
   const t = BET_TYPES[state.exoticType];
-  hint.innerHTML = `<b>${t.label}</b> · ${state.box && t.boxable ? `${t.size === 2 ? 'Top 2' : 'Top 3'} in any order` : t.hint}`;
+  const box = state.box && t.boxable;
+  hint.innerHTML = `<b>${label(state.exoticType, box)}</b> · ${hintFor(state.exoticType, box)}`;
   boxSwitch.hidden = !t.boxable;
+  const sw = boxToggleLabel(state.sport, state.exoticType);
+  $('.switch__label', boxSwitch).innerHTML = sw === 'Box' ? 'Box <small>any order</small>' : sw;
   boxToggle.checked = state.box;
 }
 
@@ -128,17 +134,17 @@ function renderBuilder() {
 
   const type = state.exoticType;
   const legs = currentLegs();
-  const err = pickError(type, legs, state.box);
+  const err = pickError(type, legs, state.box, sport().noun);
   if (err) {
     builder.innerHTML = `<div class="builder__text"><p class="builder__err">${err}</p>
-      <p class="builder__line">${BET_TYPES[type].label}${state.box ? ' box' : ''} · ${BET_TYPES[type].hint}</p></div>
+      <p class="builder__line">${label(type, state.box)} · ${hintFor(type, state.box)}</p></div>
       <button class="btn btn--ghost" data-act="clear-picks">Clear</button>`;
     return;
   }
   const bet = buildBet(type, legs, { stake: state.stake, box: state.box, field: state.field });
   const n = bet.combos.length;
   builder.innerHTML = `<div class="builder__text">
-      <p class="builder__line"><b>${BET_TYPES[type].label}${state.box ? ' box' : ''}</b> · ${n} × ${money(state.stake)} = <b>${money(betCost(bet))}</b></p>
+      <p class="builder__line"><b>${label(type, state.box)}</b> · ${n} × ${money(state.stake)} = <b>${money(betCost(bet))}</b></p>
       <p class="builder__pays">Pays up to <b>${money(betMaxReturn(bet, state.field.horses, state.field.places))}</b></p>
     </div>
     <button class="btn btn--primary" data-act="add-exotic">Add to slip</button>`;
@@ -156,9 +162,16 @@ function togglePick(leg, h) {
 
 function addExotic() {
   const legs = currentLegs();
-  if (pickError(state.exoticType, legs, state.box)) return;
+  if (pickError(state.exoticType, legs, state.box, sport().noun)) return;
   const bet = buildBet(state.exoticType, legs, { stake: state.stake, box: state.box, field: state.field });
   if (addBet(bet)) clearPicks();
+}
+
+/** Re-render the card for a new sport: header + chips, keeping the exotic type if the sport offers it. */
+export function resetForSport() {
+  if (!sport().exotics.includes(state.exoticType)) { state.exoticType = sport().exotics[0]; state.box = false; }
+  state.legs = [[], [], []];
+  if (state.market === 'exotic') renderChips();
 }
 
 export function setMarket(market) {

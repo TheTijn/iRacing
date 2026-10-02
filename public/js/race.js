@@ -3,7 +3,7 @@
 import { state, emit, on, $, $$ } from './state.js';
 import { liveState, settle } from './pricing.js';
 import { money, ordinal, odds } from './store.js';
-import { silkSVG, saddle } from './silks.js';
+import { runnerIcon, saddle } from './silks.js';
 import { betTitle } from './betslip.js';
 import { haptic } from './fx.js';
 import { toast } from './ui.js';
@@ -62,14 +62,14 @@ function buildStrip() {
     i < 3 ? `<span class="is-top">${i + 1}<sup>${SUF[i]}</sup></span>` : `<span>${i + 1}</span>`).join('')}</div>
     <div class="order__chips">${horses.map(h =>
     `<div class="ochip ${my.has(h) ? 'is-mine' : ''}" data-h="${h}">
-      <span class="ochip__silk">${silkSVG(h)}</span>${saddle(h)}
+      <span class="ochip__silk">${runnerIcon(h)}</span>${saddle(h)}
     </div>`).join('')}</div>`;
   run.chips = Object.fromEntries($$('.ochip', strip).map(el => [el.dataset.h, el]));
 }
 
 function horseLive(h, order) {
   const pos = order.indexOf(h) + 1;
-  return `<span class="lbet__horse">${silkSVG(h)}<b>#${h}</b><span class="lbet__pos" data-pos="${h}">${ordinal(pos)}</span></span>`;
+  return `<span class="lbet__horse">${runnerIcon(h)}<b>#${h}</b><span class="lbet__pos" data-pos="${h}">${ordinal(pos)}</span></span>`;
 }
 
 function buildLiveBets(order) {
@@ -122,7 +122,7 @@ function applyOrder(order, { final = false } = {}) {
 function showCallout(h, verb) {
   const r = state.field.runners[h];
   const isMine = mine().has(h);
-  callout.innerHTML = `${silkSVG(h)}<span><b>#${h} ${r.name}</b> ${verb || (isMine ? 'hits the front for you!' : 'hits the front')}</span>`;
+  callout.innerHTML = `${runnerIcon(h)}<span><b>#${h} ${r.name}</b> ${verb || (isMine ? 'hits the front for you!' : 'hits the front')}</span>`;
   callout.classList.toggle('is-mine', isMine);
   callout.classList.add('is-on');
   clearTimeout(run.calloutTimer);
@@ -331,7 +331,7 @@ export function podiumMarkup(order, mineSet = mine()) {
   const { runners, win } = state.field;
   return order.slice(0, 3).map((h, i) =>
     `<li class="podium__step ${mineSet.has(h) ? 'is-mine' : ''}">
-      <div class="podium__silk">${silkSVG(h)}${saddle(h)}</div>
+      <div class="podium__silk">${runnerIcon(h)}${saddle(h)}</div>
       <span class="podium__name">${runners[h].name}</span>
       <div class="podium__block"><span class="podium__place">${i + 1}<sup>${['st', 'nd', 'rd'][i]}</sup></span>
         <span class="podium__price">${i === 0 ? `Win ${odds(win[h])}` : `#${h}`}</span></div>

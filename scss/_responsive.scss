@@ -10,6 +10,10 @@
   .lbet { padding: 7px 10px 7px 14px; }
   .live { padding-top: 6px; }
 }
+// Narrow phones: the sport toggle needs the room, so the wordmark drops to its mark.
+@media (max-width: 419px) {
+  .wordmark__text { display: none; }
+}
 @media (max-width: 359px) {
   .odd { width: 56px; }
   .col-w { width: 56px; }

@@ -40,6 +40,7 @@ export function showView(phase, { instant = false } = {}) {
   const next = $(views[phase]);
   app.dataset.phase = phase;
   state.phase = phase;
+  emit('phase', phase);
   if (next === current) return;
   const prev = current;
   current = next;

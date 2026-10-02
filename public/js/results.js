@@ -1,5 +1,5 @@
 // Result screen: hero (win / partial return / loss), podium, settled bets, next actions.
-import { state, $ } from './state.js';
+import { state, sport, $ } from './state.js';
 import { money, odds } from './store.js';
 import { describeSel, betTitle, slipCost } from './betslip.js';
 import { podiumMarkup } from './race.js';
@@ -50,7 +50,7 @@ function heroMarkup(o, kind) {
   }
   return `<p class="hero__eyebrow">Race ${o.raceNo} · Result</p>
     <h2 class="hero__title">Not this time</h2>
-    <p class="hero__sub"><b>#${o.order[0]} ${w.name}</b> won at ${odds(state.field.win[o.order[0]])}.<br>A fresh field is waiting at the gates.</p>`;
+    <p class="hero__sub"><b>#${o.order[0]} ${w.name}</b> won at ${odds(state.field.win[o.order[0]])}.<br>${sport().waiting}</p>`;
 }
 
 function betMarkup(b) {

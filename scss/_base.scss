@@ -90,6 +90,27 @@ svg { display: block; }
   }
 }
 .topbar__right { display: flex; align-items: center; gap: 4px; }
+
+// Horses / Dogs switch (icon-only segmented control; disabled while a race runs)
+.sport-toggle {
+  position: relative; display: grid; grid-template-columns: 1fr 1fr; padding: 3px; margin-left: auto; margin-right: 2px;
+  border-radius: 12px; background: var(--surface); border: 1px solid var(--line);
+  &__thumb {
+    position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px); border-radius: 9px;
+    background: var(--surface-3); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 6px 16px -8px #000;
+    transition: transform 280ms $ease-out;
+  }
+  &[data-active='dogs'] &__thumb { transform: translateX(100%); }
+  &__btn {
+    position: relative; width: 36px; height: 34px; display: grid; place-items: center; border-radius: 9px; color: var(--text-3);
+    @include press(0.92);
+    svg { width: 22px; height: 22px; }
+    &.is-active { color: var(--accent); }
+    @include hover { color: var(--text); }
+    &:disabled { cursor: default; }
+  }
+  &:has(:disabled) { opacity: 0.45; }
+}
 .balance {
   display: flex; flex-direction: column; align-items: flex-end; padding: 4px 10px 4px 12px; margin-right: 4px;
   border-radius: 12px; background: var(--surface); border: 1px solid var(--line);
@@ -139,6 +160,7 @@ svg { display: block; }
 
 // ---------- Silk ----------
 .silk { display: block; width: 100%; height: 100%; overflow: visible; }
+.silk--trap text { font-family: var(--f-display); font-weight: 900; font-size: 25px; }
 
 .saddle {
   display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 6px;

@@ -1,32 +1,36 @@
-// Boot + phase machine: BETTING → RACING → REVEAL → RESULT → (Rebet | Next race).
-import { state, on, emit, $, $$ } from './state.js';
+// Boot + phase machine: BETTING → RACING → REVEAL → RESULT → (Rebet | Next race), per sport.
+import { state, sport, on, emit, $, $$ } from './state.js';
 import { CONFIG } from './data.js';
+import { SPORTS } from './sports.js';
 import { settle, buildBet, BET_TYPES } from './pricing.js';
 import { loadStore, saveBalance, saveSettings, loadHistory, pushHistory, money, odds } from './store.js';
 import { buildField } from './field.js';
-import { initRaceCard, renderHeader, renderRunners } from './racecard.js';
+import { initRaceCard, renderHeader, renderRunners, resetForSport } from './racecard.js';
 import { initSlip, render as renderSlip, slipCost, describeSel, betTitle, closeSlip, addBet, newId } from './betslip.js';
 import * as race from './race.js';
 import { initResults, renderResult, cancelCelebration, resultReady } from './results.js';
 import { toast, renderBalance, showView, initSheets, openSheetEl, closeSheet } from './ui.js';
 import { gsap, reducedMotion } from './fx.js';
 
+const app = $('#app');
 const params = new URLSearchParams(location.search);
-const forcedRace = params.get('race');   // debug: ?race=190 plays that video every time
-let bag = [];
-let lastRaceId = null;
+const forcedRace = params.get('race');   // debug: ?race=190 / ?race=d01 plays that video every time
+const forcedSport = params.get('sport'); // ?sport=dogs opens on that sport
+const bags = {};                         // shuffle bag per sport
+const lastRaceId = {};
 
 function pickRace() {
   if (forcedRace) {
-    const r = state.races.find(x => x.id === forcedRace);
+    const r = state.races.find(x => x.id === forcedRace && x.sport === state.sport);
     if (r) return r;
   }
+  const bag = (bags[state.sport] ||= []);
   if (!bag.length) {
-    bag = state.races.slice().sort(() => Math.random() - 0.5);
-    if (bag.length > 1 && bag[bag.length - 1].id === lastRaceId) bag.unshift(bag.pop());
+    bag.push(...state.races.filter(r => r.sport === state.sport).sort(() => Math.random() - 0.5));
+    if (bag.length > 1 && bag[bag.length - 1].id === lastRaceId[state.sport]) bag.unshift(bag.pop());
   }
   const r = bag.pop();
-  lastRaceId = r.id;
+  lastRaceId[state.sport] = r.id;
   return r;
 }
 
@@ -34,8 +38,9 @@ function newRace({ keepField = false } = {}) {
   race.stop();
   state.race = pickRace();
   state.raceNo++;
-  if (!keepField || !state.field || state.field.horses.length !== state.race.runners) {
-    state.field = buildField(state.race.runners);
+  const f = state.field;
+  if (!keepField || !f || f.sport !== state.sport || f.horses.length !== state.race.runners) {
+    state.field = buildField(state.race.runners, Math.random, state.sport);
   }
   state.legs = [[], [], []];
   state.placed = [];
@@ -83,7 +88,7 @@ function onRaceFinish(order, { natural = false } = {}) {
   saveBalance();
 
   pushHistory({
-    raceNo: state.raceNo, at: Date.now(), podium: order.slice(0, 3), staked, returned,
+    raceNo: state.raceNo, sport: state.sport, at: Date.now(), podium: order.slice(0, 3), staked, returned,
     bets: bets.map(b => ({ id: b.id, title: betTitle(b), sel: describeSel(b), stake: b.stake * b.combos.length, ret: b.ret })),
   });
 
@@ -139,6 +144,51 @@ $('#btnReplayClose').addEventListener('click', closeReplay);
 replayEl.addEventListener('click', e => { if (e.target === replayEl) closeReplay(); });
 on('escape', closeReplay);
 
+// ---------- Sport (Horses / Dogs toggle) ----------
+const sportToggle = $('#sportToggle');
+function applySport() {
+  const s = sport();
+  app.dataset.sport = s.key;
+  sportToggle.dataset.active = s.key;
+  $$('button', sportToggle).forEach(b => {
+    const on = b.dataset.sport === s.key;
+    b.classList.toggle('is-active', on);
+    b.setAttribute('aria-checked', on);
+  });
+  $('#stageLoaderText').textContent = s.loading;
+  $('#replayTag').textContent = s.replayTag;
+}
+
+/** Switch sport between races: new field from that sport's videos. Same wallet and history. */
+function setSport(key) {
+  if (key === state.sport || !SPORTS[key] || !['betting', 'result'].includes(state.phase)) return;
+  if (!state.races.some(r => r.sport === key)) { toast(`No ${SPORTS[key].name.toLowerCase()} races available`, true); return; }
+  const hadBets = state.slip.length > 0;
+  cancelCelebration();
+  closeReplay();
+  closeSlip();
+  state.sport = key;
+  state.settings.sport = key;
+  saveSettings();
+  state.slip = [];
+  state.lastPlaced = [];    // picks belong to the other sport's field
+  applySport();
+  resetForSport();
+  newRace();
+  showView('betting');
+  renderSlip();
+  if (hadBets) toast('Betslip cleared for the new field');
+}
+
+function initSportToggle() {
+  sportToggle.addEventListener('click', e => {
+    const b = e.target.closest('button[data-sport]');
+    if (b && !b.disabled) setSport(b.dataset.sport);
+  });
+  // No switching while a race is running (bets are riding on it).
+  on('phase', phase => $$('button', sportToggle).forEach(b => { b.disabled = phase === 'racing' || phase === 'loading'; }));
+}
+
 // ---------- Settings ----------
 function syncSettingsUI() {
   $$('#sheetSettings .pills').forEach(g => {
@@ -183,7 +233,7 @@ function renderHistory() {
   const el = $('#historyList');
   if (!list.length) { el.innerHTML = '<li class="history__empty">No settled bets yet this session.</li>'; return; }
   el.innerHTML = list.map(h => `
-    <li class="history__race"><span>Race ${h.raceNo} · ${new Date(h.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+    <li class="history__race"><span>Race ${h.raceNo}${h.sport ? ` · ${SPORTS[h.sport]?.name || ''}` : ''} · ${new Date(h.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
       <span>1-2-3: ${h.podium.join('-')}</span></li>
     ${h.bets.map(b => `<li class="rbet ${b.ret > 0 ? 'is-won' : 'is-lost'}">
       <span class="rbet__type">${b.title}<em>${b.id}</em></span>
@@ -202,6 +252,11 @@ async function init() {
     toast('Could not load races — please refresh', true);
     throw e;
   }
+  const forced = forcedRace && state.races.find(r => r.id === forcedRace);
+  const want = [forced?.sport, forcedSport, state.settings.sport].find(k => SPORTS[k] && state.races.some(r => r.sport === k));
+  state.sport = want || state.races[0].sport;
+  applySport();
+  initSportToggle();
   initSheets();
   initSlip();
   initRaceCard();
@@ -231,4 +286,4 @@ async function init() {
 init();
 
 // Debug handle for QA in the console
-window.__ir = { state, settle, buildBet, BET_TYPES, addBet, odds };
+window.__ir = { state, settle, buildBet, BET_TYPES, addBet, odds, setSport };

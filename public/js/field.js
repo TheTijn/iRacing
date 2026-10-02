@@ -1,6 +1,6 @@
-// Builds a race field: random runner profiles on saddle numbers, with prices rescaled so every
-// race has a realistic book (a random subset of profiles would otherwise over- or under-round).
-import { PROFILES, SILKS } from './data.js';
+// Builds a race field: random runner profiles on saddle (or trap) numbers, with prices rescaled so
+// every race has a realistic book (a random subset of profiles would otherwise over- or under-round).
+import { SPORTS } from './sports.js';
 import { placesFor, round2 } from './pricing.js';
 
 export const WIN_BOOK = 1.11;    // ~11% overround, as on the legacy card (12 runners)
@@ -15,9 +15,10 @@ function shuffle(a, rnd = Math.random) {
   return r;
 }
 
-export function buildField(runnerCount, rnd = Math.random) {
+export function buildField(runnerCount, rnd = Math.random, sport = 'horses') {
+  const { profiles: pool, colours } = SPORTS[sport];
   const horses = Array.from({ length: runnerCount }, (_, i) => i + 1);
-  const profiles = shuffle(PROFILES, rnd).slice(0, runnerCount);
+  const profiles = shuffle(pool, rnd).slice(0, runnerCount);
   const places = placesFor(runnerCount);
 
   const winBook = profiles.reduce((s, p) => s + 1 / p.win, 0);
@@ -30,11 +31,11 @@ export function buildField(runnerCount, rnd = Math.random) {
     const p = profiles[i];
     const w = Math.max(1.05, round2(p.win * winScale));
     const pl = Math.min(w, Math.max(1.01, round2(p.place * placeScale)));
-    runners[no] = { no, name: p.name, form: p.form, rating: p.rating, win: w, place: pl, silk: SILKS[no] };
+    runners[no] = { no, name: p.name, form: p.form, rating: p.rating, win: w, place: pl, silk: colours[no] };
     win[no] = w;
     place[no] = pl;
   });
   const favourite = horses.reduce((a, b) => (win[b] < win[a] ? b : a));
   const byOdds = horses.slice().sort((a, b) => win[a] - win[b] || a - b);
-  return { horses, runners, win, place, places, favourite, byOdds };
+  return { sport, horses, runners, win, place, places, favourite, byOdds };
 }

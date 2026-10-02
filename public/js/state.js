@@ -1,7 +1,10 @@
 // Single mutable game state + a tiny event bus. Modules mutate state, then emit so views re-render.
+import { SPORTS } from './sports.js';
+
 export const state = {
   phase: 'loading',          // loading | betting | racing | result
-  races: [],                 // telemetry from data/races.json
+  sport: 'horses',           // horses | dogs (see sports.js)
+  races: [],                 // telemetry from data/races.json (all sports)
   race: null,                // current race telemetry (video)
   raceNo: 1177,
   field: null,               // { horses, runners{no:runner}, win{no:odds}, place{no:odds}, places, favourite }
@@ -17,6 +20,9 @@ export const state = {
   balance: 0,
   settings: null,
 };
+
+/** Config + wording for the current sport. */
+export const sport = () => SPORTS[state.sport];
 
 const bus = new EventTarget();
 export const emit = (name, detail) => bus.dispatchEvent(new CustomEvent(name, { detail }));

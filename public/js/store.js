@@ -20,7 +20,7 @@ function guessCurrency() {
 }
 
 export function loadStore() {
-  state.settings = { odds: 'decimal', currency: guessCurrency(), instant: false, saver: false, ...read(localStorage, KEY_SETTINGS, {}) };
+  state.settings = { odds: 'decimal', currency: guessCurrency(), instant: false, saver: false, sport: 'horses', ...read(localStorage, KEY_SETTINGS, {}) };
   const bal = Number(read(localStorage, KEY_BALANCE, CONFIG.startBalance));
   state.balance = Number.isFinite(bal) ? bal : CONFIG.startBalance;
   state.stake = CONFIG.defaultStake;

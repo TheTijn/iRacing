@@ -27,3 +27,20 @@ test('smaller fields pay fewer places', () => {
   assert.equal(f.places, 2);
   assert.equal(f.horses.length, 6);
 });
+
+test('greyhound fields: six traps, two places, coherent market', () => {
+  for (let seed = 1; seed <= 300; seed++) {
+    const f = buildField(6, mulberry(seed), 'dogs');
+    assert.equal(f.sport, 'dogs');
+    assert.deepEqual(f.horses, [1, 2, 3, 4, 5, 6]);
+    assert.equal(f.places, 2);
+    assert.equal(new Set(Object.values(f.runners).map(r => r.name)).size, 6, 'unique names');
+    assert.ok(Object.values(f.runners).every(r => r.form.every(p => p >= 1 && p <= 6)), 'greyhound form is 1–6');
+    assert.ok(Object.values(f.runners).every(r => r.silk && r.silk.body), 'every trap has a jacket');
+    const winBook = f.horses.reduce((s, h) => s + 1 / f.win[h], 0);
+    const placeBook = f.horses.reduce((s, h) => s + 1 / f.place[h], 0);
+    assert.ok(Math.abs(winBook - WIN_BOOK) < 0.01, `seed ${seed}: win book ${winBook}`);
+    assert.ok(Math.abs(placeBook - PLACE_BOOK * f.places) < 0.05, `seed ${seed}: place book ${placeBook}`);
+    for (const h of f.horses) assert.ok(f.place[h] <= f.win[h] && f.place[h] >= 1.01, `seed ${seed}: #${h}`);
+  }
+});

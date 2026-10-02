@@ -2,3 +2,6 @@ node_modules/
 .DS_Store
 # Source videos (MPEG-4 Part 2, 46MB each) — transcoded copies live in public/assets/races/
 Test Videos/*.mp4
+# Dog source videos (1080p, ~150MB each) — transcoded copies live in public/assets/races/dogs/
+Dog racing videos/*.mp4
+Dog racing videos/*.dump.json

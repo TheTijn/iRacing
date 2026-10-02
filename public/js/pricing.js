@@ -5,13 +5,13 @@
 // `stake` is per combination; ticket cost = stake × combos.length.
 
 export const BET_TYPES = {
-  WIN:      { label: 'Win',      short: 'Win',   ordered: true,  size: 1, cap: Infinity, hint: 'Pick the winner' },
-  PLACE:    { label: 'Place',    short: 'Place', ordered: false, size: 1, cap: Infinity, hint: 'Pick a horse to finish top 3' },
-  EXACTA:   { label: 'Exacta',   short: 'EX',    ordered: true,  size: 2, cap: 500,  hint: '1st & 2nd in exact order', boxable: true },
-  TRIFECTA: { label: 'Trifecta', short: 'TRI',   ordered: true,  size: 3, cap: 5000, hint: '1st, 2nd & 3rd in exact order', boxable: true },
-  QUINELLA: { label: 'Quinella', short: 'QU',    ordered: false, size: 2, cap: 250,  hint: '1st & 2nd in any order' },
-  TRIO:     { label: 'Trio',     short: 'TRIO',  ordered: false, size: 3, cap: 1000, hint: 'Top 3 in any order' },
-  SWINGER:  { label: 'Swinger',  short: 'SW',    ordered: false, size: 2, cap: 150,  hint: '2 horses both in the top 3' },
+  WIN:      { label: 'Win',      ordered: true,  size: 1, cap: Infinity },
+  PLACE:    { label: 'Place',    ordered: false, size: 1, cap: Infinity },
+  EXACTA:   { label: 'Exacta',   ordered: true,  size: 2, cap: 500, boxable: true },
+  TRIFECTA: { label: 'Trifecta', ordered: true,  size: 3, cap: 5000, boxable: true },
+  QUINELLA: { label: 'Quinella', ordered: false, size: 2, cap: 250 },
+  TRIO:     { label: 'Trio',     ordered: false, size: 3, cap: 1000 },
+  SWINGER:  { label: 'Swinger',  ordered: false, size: 2, cap: 150 },
 };
 export const EXOTICS = ['EXACTA', 'TRIFECTA', 'QUINELLA', 'TRIO', 'SWINGER'];
 export const EXOTIC_MARGIN = 0.2;
@@ -105,16 +105,16 @@ export function expandCombos(type, legs, box = false) {
 }
 
 /** Why a set of picks can't form a bet yet (null when valid). */
-export function pickError(type, legs, box = false) {
+export function pickError(type, legs, box = false, noun = 'horse') {
   const { ordered, size } = BET_TYPES[type];
   const pos = ['1st', '2nd', '3rd'];
   if (ordered && !box && size > 1) {
-    for (let i = 0; i < size; i++) if (!legs[i] || !legs[i].length) return `Pick a horse for ${pos[i]}`;
-    if (!expandCombos(type, legs, box).length) return 'Pick different horses for each position';
+    for (let i = 0; i < size; i++) if (!legs[i] || !legs[i].length) return `Pick a ${noun} for ${pos[i]}`;
+    if (!expandCombos(type, legs, box).length) return `Pick different ${noun}s for each position`;
     return null;
   }
   const n = uniq(legs[0] || []).length;
-  if (n < size) return `Pick ${size - n} more horse${size - n > 1 ? 's' : ''}`;
+  if (n < size) return `Pick ${size - n} more ${noun}${size - n > 1 ? 's' : ''}`;
   return null;
 }
 

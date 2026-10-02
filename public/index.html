@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#06100B">
-  <meta name="description" content="Instant horse racing — pick your runners, watch the race, get paid in under a minute.">
+  <meta name="description" content="Instant horse and greyhound racing — pick your runners, watch the race, get paid in under a minute.">
   <title>Instant Racing</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=Instrument+Sans:wght@400..700&display=swap">
-  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=4">
   <link rel="preload" href="data/races.json" as="fetch" crossorigin>
 </head>
 <body>
@@ -19,6 +19,7 @@
       <clipPath id="silkBody" clipPathUnits="userSpaceOnUse">
         <path d="M12.4 15.2 Q20 12.6 27.6 15.2 L29 35.2 Q20 37.6 11 35.2 Z"/>
       </clipPath>
+      <clipPath id="trapRug" clipPathUnits="userSpaceOnUse"><rect x="5" y="5" width="30" height="30" rx="6.5"/></clipPath>
       <linearGradient id="silkShade" x1="0" y1="0" x2="0.35" y2="1">
         <stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".28"/>
       </linearGradient>
@@ -35,10 +36,12 @@
     <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></symbol>
     <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M5 4h14v9H5z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5 4h3.5v3H5zm7 0h3.5v3H12zM8.5 7H12v3H8.5zm7 0H19v3h-3.5zM5 10h3.5v3H5zm7 0h3.5v3H12z" fill="currentColor"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-horse" viewBox="0 0 24 24"><path d="M9.2 21.5c.4-2.6 1.6-4.4 3-5.6l-2.2-.4-2.3 1.9c-.7.6-1.7.5-2.3-.1l-1-1c-.6-.6-.6-1.5-.1-2.1l4.4-5.5c.9-1.1 1.5-2.3 1.9-3.6l.3-1.3c.1-.4.6-.5.9-.2l1.3 1.4 1.1-1.6c.2-.3.7-.3.9.1l.5 1.6c2.8 1.3 4.6 4 4.9 7.2.3 3.4-.5 6.8-1.6 9.2z" fill="currentColor"/><circle cx="11.6" cy="8.6" r=".9" fill="var(--bg)"/></symbol>
+    <symbol id="i-dog" viewBox="0 0 24 24"><path d="M1.6 13.2c1.6.2 2.9-.3 4-1.2 1.6-1.4 3.6-2.4 6.1-2.4 1.5 0 2.8.3 4 .2l1.6-1.9c.2-.3.6-.4.9-.3l.6.2.4-.9c.1-.3.5-.3.7-.1l.5.7 2.3.6c.5.1.7.7.4 1.1l-.4.5-2.6.5c-.5 1.6-1.6 2.9-3.2 3.4l2.4 2.9 2.2.6-.3 1.1-3-.4-3-3.2c-1.1.2-2.3.1-3.4-.2l-3.2 2.5 1.2 1.7-.9.6-2.4-2.3 2.6-3.1c-.6-.4-1.1-.9-1.5-1.5-1.3.9-2.9 1.4-4.7 1.2z" fill="currentColor"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
   </svg>
 
-  <div class="app" id="app" data-phase="loading">
+  <div class="app" id="app" data-phase="loading" data-sport="horses">
     <div class="grain" aria-hidden="true"></div>
 
     <!-- ============ TOP BAR ============ -->
@@ -48,6 +51,11 @@
           <svg viewBox="0 0 32 32"><path d="M4 26 L14 6 h6 L10 26z" fill="currentColor"/><path d="M15 26 L25 6 h3 L18 26z" fill="currentColor" opacity=".45"/></svg>
         </span>
         <span class="wordmark__text"><b>Instant</b><span>Racing</span></span>
+      </div>
+      <div class="sport-toggle" id="sportToggle" role="radiogroup" aria-label="Sport" data-active="horses">
+        <span class="sport-toggle__thumb" aria-hidden="true"></span>
+        <button class="sport-toggle__btn is-active" role="radio" aria-checked="true" data-sport="horses" aria-label="Horse racing" title="Horses"><svg><use href="#i-horse"/></svg></button>
+        <button class="sport-toggle__btn" role="radio" aria-checked="false" data-sport="dogs" aria-label="Greyhound racing" title="Greyhounds"><svg><use href="#i-dog"/></svg></button>
       </div>
       <div class="topbar__right">
         <div class="balance" id="balance" aria-live="polite">
@@ -111,7 +119,7 @@
             <button class="icon-btn icon-btn--glass" id="btnSaver" aria-label="Hide video (data saver)" aria-pressed="false"><svg><use href="#i-eye"/></svg></button>
           </div>
           <div class="callout" id="callout" aria-hidden="true"></div>
-          <div class="stage__loader" id="stageLoader"><span></span>Horses to the gates…</div>
+          <div class="stage__loader" id="stageLoader"><span></span><em id="stageLoaderText">Horses to the gates…</em></div>
         </div>
 
         <div class="rail" id="rail">
@@ -221,7 +229,7 @@
     <div class="replay" id="replay" role="dialog" aria-modal="true" aria-label="Finish replay">
       <div class="replay__frame">
         <video id="replayVideo" muted playsinline webkit-playsinline preload="none" disablepictureinpicture></video>
-        <span class="replay__tag">Replay · Photo finish</span>
+        <span class="replay__tag" id="replayTag">Replay · Photo finish</span>
         <button class="icon-btn icon-btn--glass replay__close" id="btnReplayClose" aria-label="Close replay"><svg><use href="#i-close"/></svg></button>
       </div>
     </div>

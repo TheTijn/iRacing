@@ -6,7 +6,8 @@ import {
   expandCombos, pickError, buildBet, settle, betCost, maxReturn, liveState, winProbs,
   comboProbability, exoticPrice, formatOdds, toAmerican, toFractional, placesFor, EXOTICS,
 } from '../public/js/pricing.js';
-import { PROFILES } from '../public/js/data.js';
+import { SPORTS } from '../public/js/sports.js';
+const PROFILES = SPORTS.horses.profiles;
 
 const horses = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const field = {
@@ -42,8 +43,11 @@ test('pick validation', () => {
 });
 
 test('race data is sane', () => {
-  assert.equal(races.length, 5);
+  assert.equal(races.filter(r => r.sport === 'horses').length, 5);
+  assert.ok(races.filter(r => r.sport === 'dogs').length >= 2);
   for (const r of races) {
+    assert.ok(SPORTS[r.sport], `${r.id}: unknown sport ${r.sport}`);
+    assert.ok(r.venue, `${r.id}: venue`);
     assert.equal(r.result.length, r.runners);
     assert.deepEqual(r.orderEvents.at(-1).order, r.result);
     assert.ok(r.finishFrame > r.gateEndFrame);
@@ -73,6 +77,16 @@ test('settlement against video 190 podium 1-2-6', () => {
   assert.equal(settle(sw, podium), p16);
   const sw3 = bet('SWINGER', [[1, 2, 6]]);          // all three pairs win
   assert.equal(settle(sw3, podium), Math.round(sw3.combos.reduce((s, c) => s + c.price, 0) * 100) / 100);
+});
+
+test('greyhound results match the finish shown in the videos', () => {
+  assert.deepEqual(races.find(r => r.id === 'd01').result, [2, 3, 4, 6, 1, 5]);
+  assert.deepEqual(races.find(r => r.id === 'd02').result, [4, 1, 6, 2, 5, 3]);
+  for (const r of races.filter(x => x.sport === 'dogs')) {
+    assert.equal(r.runners, 6);
+    assert.equal(r.distance, 720);
+    assert.ok(r.replayStart > r.finishFrame && r.replayEnd > r.replayStart, `${r.id}: replay window`);
+  }
 });
 
 test('settlement against every video podium', () => {
@@ -149,4 +163,17 @@ test('every exotic type builds and settles', () => {
     assert.ok(b.combos.length > 0, t);
     assert.ok(settle(b, podium) > 0, t);
   }
+});
+
+test('six-runner (greyhound) Place pays the top 2 only', () => {
+  const field = { horses: [1, 2, 3, 4, 5, 6], win: { 1: 3, 2: 4, 3: 5, 4: 7, 5: 9, 6: 12 }, place: { 1: 1.6, 2: 1.9, 3: 2.2, 4: 2.8, 5: 3.4, 6: 4 } };
+  const places = placesFor(6);
+  assert.equal(places, 2);
+  const order = [4, 1, 6, 2, 5, 3];
+  assert.equal(settle(buildBet('PLACE', [[1]], { stake: 10, field }), order, places), 16);
+  assert.equal(settle(buildBet('PLACE', [[6]], { stake: 10, field }), order, places), 0);
+  // Reverse Forecast = boxed Exacta: two combos, one pays
+  const rf = buildBet('EXACTA', [[1, 4]], { stake: 1, box: true, field });
+  assert.equal(rf.combos.length, 2);
+  assert.ok(settle(rf, order, places) > 0);
 });

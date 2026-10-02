@@ -1,0 +1,12 @@
+{
+  "venue": "Crawford Park",
+  "fps": 30,
+  "jumpFrame": 120,
+  "finishFrame": 1479,
+  "replayStart": 1605,
+  "replayEnd": 1815,
+  "result": [2, 3, 4, 6, 1, 5],
+  "dist": [[120, 720], [1479, 0]],
+  "notes": "Distance is linear on the HUD (700m @5s … 100m @43s). Finish read off the line cam; replay skips the REPLAY card.",
+  "overrides": []
+}

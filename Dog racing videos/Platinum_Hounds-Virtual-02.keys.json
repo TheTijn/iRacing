@@ -1,0 +1,14 @@
+{
+  "venue": "Summerset Park",
+  "fps": 30,
+  "jumpFrame": 120,
+  "finishFrame": 1755,
+  "replayStart": 1845,
+  "replayEnd": 2098,
+  "result": [4, 1, 6, 2, 5, 3],
+  "dist": [[120, 720], [1755, 0]],
+  "notes": "Distance is linear on the HUD (706m @5s … 99m @51s). Finish read off the line cam.",
+  "overrides": [
+    { "from": 1641, "to": 1754, "order": [4, 1, 6, 2, 5, 3], "why": "4 passes 1 on the last frames before the bar fades out (54.7s)" }
+  ]
+}
