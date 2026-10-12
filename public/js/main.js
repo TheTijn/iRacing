@@ -96,17 +96,29 @@ function onRaceFinish(order, { natural = false } = {}) {
   race.afterFinish(natural ? CONFIG.finishBeatMs : 0, () => {
     race.pauseVideo();
     showView('result');
-    renderResult(outcome, { canRebet: slipCost(state.lastPlaced) <= state.balance + 1e-9 });
+    renderResult(outcome, { canRebet: state.lastPlaced.length > 0 });   // affordability is checked at Place bet
   });
 }
 
+/** Rebet: next race on the same field with last race's bets back on the slip. Nothing is placed (or deducted)
+ *  until the player presses Place bet, so they can add or change bets first. */
 function rebet() {
   const bets = state.lastPlaced.map(b => cloneBet(b, true));
-  if (slipCost(bets) > state.balance + 1e-9) { toast('Not enough balance to rebet', true); return; }
   const oldField = state.field;
   newRace({ keepField: true });
-  if (state.field !== oldField) { showView('betting'); return; }  // field changed: can't reuse picks
-  placeBets(bets);
+  showView('betting');
+  if (state.field !== oldField) {   // field changed: the old picks don't exist in it
+    state.slip = [];
+    renderSlip();
+    emit('slip:changed');
+    toast('New field — pick your runners');
+    return;
+  }
+  state.slip = bets;
+  renderSlip();
+  emit('slip:changed');   // highlights the re-added prices on the card
+  if (slipCost(bets) > state.balance + 1e-9) toast(`Not enough balance for these bets (${money(slipCost(bets))}) — lower a stake`, true);
+  else toast(`${bets.length} ${bets.length === 1 ? 'bet' : 'bets'} back on your slip — add more or place`);
 }
 
 function nextRace() {

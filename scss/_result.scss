@@ -41,5 +41,10 @@
 }
 
 .result__actions { position: relative; flex: none; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px calc(12px + var(--safe-b)); border-top: 1px solid var(--line); background: rgba(5, 13, 9, 0.92); }
-.result__row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; .btn { height: 48px; } }
-#btnPrimary { flex-direction: column; gap: 2px; small { font-size: 12px; font-weight: 650; opacity: 0.7; @include num; } }
+.result__row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  .btn { min-width: 0; flex-direction: column; gap: 2px; padding: 0 10px; }
+  small { font-size: 12px; font-weight: 650; opacity: 0.7; @include num; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+}
+// Replay lives with the podium, away from the action row (no accidental taps when reaching for Rebet).
+.result__replay { display: flex; margin: -8px auto 20px; svg { width: 16px; height: 16px; } }

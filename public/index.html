@@ -156,6 +156,7 @@
           <div class="result__main">
             <div class="result__hero" id="resultHero"></div>
             <div class="result__podium" id="resultPodium"></div>
+            <button class="btn btn--ghost btn--sm result__replay" id="btnReplay"><svg><use href="#i-replay"/></svg><span>Replay finish</span></button>
           </div>
           <div class="result__list">
             <h3 class="result__sub">Your bets</h3>
@@ -163,10 +164,10 @@
           </div>
         </div>
         <div class="result__actions" id="resultActions">
-          <button class="btn btn--primary btn--xl" id="btnPrimary"></button>
+          <!-- Fixed positions whatever the outcome: Next race left, Rebet bottom right. Only emphasis changes. -->
           <div class="result__row">
-            <button class="btn btn--ghost" id="btnSecondary"></button>
-            <button class="btn btn--ghost" id="btnReplay"><svg><use href="#i-replay"/></svg><span>Replay</span></button>
+            <button class="btn btn--ghost btn--xl" id="btnNext" data-act="next"></button>
+            <button class="btn btn--ghost btn--xl" id="btnRebet" data-act="rebet"></button>
           </div>
         </div>
       </section>

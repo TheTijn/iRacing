@@ -8,15 +8,22 @@
 
 $edge: 24px;
 $topbar-h: 72px;
+$app-max-h: 750px;
+$app-h: min(100dvh, #{$app-max-h});   // the app's height; layout maths uses this, not the viewport
 
 @include wide {
   .app {
-    width: min(100vw, 1680px); height: 100vh; height: 100dvh;
+    width: min(100vw, 1680px); height: min(100vh, #{$app-max-h}); height: $app-h;
     grid-template-columns: minmax(0, 1fr) $dock-w;
     grid-template-rows: auto minmax(0, 1fr);
     border-inline: 1px solid var(--line);
     --side-w: 340px;   // race / result side panel
     box-shadow: 0 0 120px -30px #000;
+  }
+
+  // Taller screens: the capped app floats as a framed panel over the blurred backdrop.
+  @media (min-height: $app-max-h + 1px) {
+    .app { border: 1px solid var(--line-2); border-radius: 24px; box-shadow: 0 60px 120px -40px rgba(0, 0, 0, 0.9); }
   }
 
   // ---------- Top bar ----------
@@ -95,7 +102,7 @@ $topbar-h: 72px;
   .race-main {
     display: flex; flex-direction: column; align-items: center; min-width: 0; min-height: 0;
     // Video + rail + running order fit the height: leave ~190px under the 16:9 stage.
-    > * { width: min(100%, calc((100dvh - #{$topbar-h} - #{$edge} - 190px) * 16 / 9)); }
+    > * { width: min(100%, calc((#{$app-h} - #{$topbar-h} - #{$edge} - 190px) * 16 / 9)); }
   }
   .stage { border-radius: 20px; border: 1px solid var(--line); }
   .stage__top { padding: 14px 14px 0 16px; }
@@ -125,6 +132,7 @@ $topbar-h: 72px;
     display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px;
   }
   .result__hero { padding-top: 0; }
+  .result__replay { margin: 22px auto 0; }
   .hero__amount { font-size: clamp(96px, 8.5vw, 150px); }
   .hero__title { font-size: clamp(64px, 5.5vw, 92px); }
   .hero__sub { font-size: 16px; }
@@ -157,7 +165,7 @@ $topbar-h: 72px;
     &.is-open { opacity: 1; transform: translate(-50%, -50%); transition: transform 300ms $ease-out, opacity 200ms ease, visibility 0s; }
     &--tall { height: min(720px, 86%); }
   }
-  .replay__frame { width: min(100%, 1120px, calc((100dvh - 96px) * 16 / 9)); }
+  .replay__frame { width: min(100%, 1120px, calc((#{$app-h} - 96px) * 16 / 9)); }
 }
 
 // Wide desktop: the race hero gets its own column next to the runners.

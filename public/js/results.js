@@ -10,8 +10,8 @@ const view = $('#viewResult');
 const hero = $('#resultHero');
 const podium = $('#resultPodium');
 const betsEl = $('#resultBets');
-const btnPrimary = $('#btnPrimary');
-const btnSecondary = $('#btnSecondary');
+const btnNext = $('#btnNext');
+const btnRebet = $('#btnRebet');
 const btnReplay = $('#btnReplay');
 let tl = null;
 let amountTween = null;
@@ -72,22 +72,12 @@ export function renderResult(o, { canRebet }) {
   $('.result__list', view).scrollTop = 0;   // its own scroller in the desktop layout
 
   const rebetCost = slipCost(state.lastPlaced);
-  const rebetLabel = `<span>Rebet</span><small>${money(rebetCost)} · same picks</small>`;
-  if (kind === 'win') {
-    btnPrimary.className = 'btn btn--gold btn--xl';
-    btnPrimary.innerHTML = rebetLabel;
-    btnPrimary.dataset.act = 'rebet';
-    btnSecondary.innerHTML = 'New race';
-    btnSecondary.dataset.act = 'next';
-  } else {
-    btnPrimary.className = 'btn btn--primary btn--xl';
-    btnPrimary.innerHTML = `<span>Next race</span><small>New field · race ${o.raceNo + 1}</small>`;
-    btnPrimary.dataset.act = 'next';
-    btnSecondary.innerHTML = 'Rebet';
-    btnSecondary.dataset.act = 'rebet';
-  }
-  btnPrimary.disabled = btnPrimary.dataset.act === 'rebet' && !canRebet;
-  btnSecondary.disabled = btnSecondary.dataset.act === 'rebet' && !canRebet;
+  // Buttons never move (muscle memory: Rebet is always bottom right); only the highlight follows the outcome.
+  btnNext.innerHTML = `<span>Next race</span><small>New field · race ${o.raceNo + 1}</small>`;
+  btnRebet.innerHTML = `<span>Rebet</span><small>${money(rebetCost)} · same picks</small>`;
+  btnNext.className = `btn btn--xl ${kind === 'win' ? 'btn--ghost' : 'btn--primary'}`;
+  btnRebet.className = `btn btn--xl ${kind === 'win' ? 'btn--gold' : 'btn--ghost'}`;
+  btnRebet.disabled = !canRebet;
   btnReplay.hidden = state.race.replayStart == null || state.settings.saver;
 
   shownAt = performance.now();
@@ -130,6 +120,6 @@ function animateIn(o, kind) {
 }
 
 export function initResults({ onAction }) {
-  [btnPrimary, btnSecondary].forEach(b => b.addEventListener('click', () => onAction(b.dataset.act)));
+  [btnNext, btnRebet].forEach(b => b.addEventListener('click', () => onAction(b.dataset.act)));
   btnReplay.addEventListener('click', () => onAction('replay'));
 }
