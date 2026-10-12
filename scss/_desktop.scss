@@ -94,19 +94,23 @@ $topbar-h: 72px;
   }
   .race-main {
     display: flex; flex-direction: column; align-items: center; min-width: 0; min-height: 0;
-    > * { width: min(100%, calc((100dvh - #{$topbar-h} - #{$edge} - 96px) * 16 / 9)); }
+    // Video + rail + running order fit the height: leave ~190px under the 16:9 stage.
+    > * { width: min(100%, calc((100dvh - #{$topbar-h} - #{$edge} - 190px) * 16 / 9)); }
   }
   .stage { border-radius: 20px; border: 1px solid var(--line); }
   .stage__top { padding: 14px 14px 0 16px; }
   .callout { left: 16px; bottom: 16px; font-size: 14px; }
   .rail { padding: 16px 4px 0; &__togo b { font-size: 30px; } }
   .race-side {
-    display: flex; flex-direction: column; min-height: 0; padding-top: 16px;
+    display: flex; flex-direction: column; min-height: 0;
     border-radius: 20px; background: var(--bg-2); border: 1px solid var(--line); overflow: hidden;
-    &__title { display: block; @include label(11px); color: var(--text-2); padding: 0 16px 6px; }
   }
-  .order { margin: 0 12px; }
-  .live { padding: 18px 12px 0; }
+  // Running order under the rail, as on phones, with room for bigger chips.
+  .order { margin: 14px 0 0; }
+  .order__slots { height: 24px; span { font-size: 14px; } span.is-top { font-size: 20px; } }
+  .order__chips { height: 70px; }
+  .ochip { gap: 4px; &__silk { width: 44px; height: 44px; padding: 3px; border-radius: 12px; } .saddle { height: 19px; font-size: 13.5px; } }
+  .live { padding: 16px 12px 0; }
   .race-actions { padding: 12px; border-top: 1px solid var(--line); }
 
   // ---------- Result ----------
