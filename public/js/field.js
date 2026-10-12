@@ -18,7 +18,8 @@ function shuffle(a, rnd = Math.random) {
 export function buildField(runnerCount, rnd = Math.random, sport = 'horses') {
   const { profiles: pool, colours } = SPORTS[sport];
   const horses = Array.from({ length: runnerCount }, (_, i) => i + 1);
-  const profiles = shuffle(pool, rnd).slice(0, runnerCount);
+  // Numbers follow the market: #1 is the favourite, #2 second favourite, and so on (rescaling keeps the order).
+  const profiles = shuffle(pool, rnd).slice(0, runnerCount).sort((a, b) => a.win - b.win || a.place - b.place);
   const places = placesFor(runnerCount);
 
   const winBook = profiles.reduce((s, p) => s + 1 / p.win, 0);

@@ -22,6 +22,20 @@ test('every field has a realistic, coherent market', () => {
   }
 });
 
+test('numbers follow the market: #1 favourite, #2 second favourite, …', () => {
+  for (const [sport, n] of [['dogs', 6], ['horses', 10], ['horses', 6]]) {
+    for (let seed = 1; seed <= 300; seed++) {
+      const f = buildField(n, mulberry(seed), sport);
+      assert.equal(f.favourite, 1, `${sport} seed ${seed}: favourite is #1`);
+      assert.deepEqual(f.byOdds, f.horses, `${sport} seed ${seed}: number order is price order`);
+      for (let h = 2; h <= n; h++) {
+        assert.ok(f.win[h - 1] <= f.win[h], `${sport} seed ${seed}: win #${h - 1} ${f.win[h - 1]} > #${h} ${f.win[h]}`);
+        assert.ok(f.place[h - 1] <= f.place[h], `${sport} seed ${seed}: place #${h - 1} ${f.place[h - 1]} > #${h} ${f.place[h]}`);
+      }
+    }
+  }
+});
+
 test('smaller fields pay fewer places', () => {
   const f = buildField(6, mulberry(7));
   assert.equal(f.places, 2);

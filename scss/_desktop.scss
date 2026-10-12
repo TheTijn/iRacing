@@ -1,0 +1,195 @@
+@use 'tokens' as *;
+
+// Widescreen desktop: full-viewport app, docked betslip column, each phase laid out in columns.
+//   betting  → [race hero | runners] [betslip]      (hero column from 1280px; above it below that)
+//   racing   → [video + distance rail] [running order · live bets · skip]
+//   result   → [hero amount + podium]  [settled bets · actions]
+// Phones, landscape phones and the tablet shell are untouched (see _responsive.scss).
+
+$edge: 24px;
+$topbar-h: 72px;
+
+@include wide {
+  .app {
+    width: min(100vw, 1680px); height: 100vh; height: 100dvh;
+    grid-template-columns: minmax(0, 1fr) $dock-w;
+    grid-template-rows: auto minmax(0, 1fr);
+    border-inline: 1px solid var(--line);
+    --side-w: 340px;   // race / result side panel
+    box-shadow: 0 0 120px -30px #000;
+  }
+
+  // ---------- Top bar ----------
+  .topbar { grid-column: 1 / -1; min-height: $topbar-h; padding: 12px $edge 10px; }
+  .wordmark {
+    gap: 10px;
+    &__mark svg { width: 30px; height: 30px; }
+    &__text { b, span { font-size: 20px; } }
+  }
+  .balance { padding: 6px 14px; margin-right: 8px; &__value { font-size: 22px; } }
+  .toast { top: calc(#{$topbar-h} + 8px); }
+
+  // ---------- Views ----------
+  .views { grid-column: 1; grid-row: 2; }
+  .app:not([data-phase='betting']) .views { grid-column: 1 / -1; }
+  .view { inset: 0 $gutter $edge $edge; }
+  .app:not([data-phase='betting']) .view { right: $edge; }
+
+  // ---------- Betslip: docked column ----------
+  .slip {
+    position: relative; grid-column: 2; grid-row: 2; z-index: 1; min-height: 0;
+    left: auto; right: auto; bottom: auto; margin: 0 $edge $edge 0; padding-bottom: 0;
+    display: none; overflow: hidden;
+    border: 1px solid var(--line-2); border-radius: 20px;
+    box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.8);
+    transform: none; transition: none;
+    &.is-visible { display: flex; }
+
+    &__bar { pointer-events: none; padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+    &__grip, &__chev { display: none; }
+    &__top b { font-size: 18px; }
+    &__panel { height: auto !important; flex: 1; min-height: 0; }
+    &__stake { padding: 14px 16px 6px; }
+    &__foot { flex-wrap: wrap; padding: 14px 16px 16px; border-top: 1px solid var(--line); }
+    &__ret-value { font-size: 34px; }
+    &__empty {
+      margin: auto; padding: 32px 28px; text-align: center; font-size: 14.5px; line-height: 1.5; color: var(--text-3);
+    }
+    &.is-empty {
+      .slip__empty { display: block; }
+      .slip__stake, .slip__clear, .tickets, .slip__cost { display: none; }
+    }
+  }
+  .btn--place { min-width: 150px; }
+  .stake-chips {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    .stake-input { grid-column: span 2; }
+  }
+
+  // ---------- Race card (betting) ----------
+  .race-head { margin: 0; }
+  .card-body {
+    position: relative; display: flex; flex-direction: column; flex: 1; min-height: 0; margin-top: 14px;
+    border-radius: 20px; background: var(--bg-2); border: 1px solid var(--line); overflow: hidden;
+  }
+  .markets { padding: 14px 14px 0; }
+  .chips { padding: 0 14px 2px; }
+  .exotics__info { padding: 10px 18px 0; }
+  .runner-head { padding: 16px 18px 6px; }
+  .runner {
+    min-height: 76px; padding: 10px 18px; gap: 14px;
+    @include hover { background: rgba(206, 255, 226, 0.025); }
+    &__silk { width: 52px; height: 52px; }
+    &__name { font-size: 16.5px; }
+  }
+  .runner { grid-template-columns: 52px minmax(0, 1fr) auto; }
+  .odd { width: 70px; height: 52px; &__price { font-size: 17px; } }
+  .runner:first-child { border-top: 0; }
+  .runner:last-child { border-bottom: 0; }
+  .builder { left: 10px; right: 10px; bottom: 10px; }
+
+  // ---------- Live race ----------
+  .view--race {
+    display: grid; grid-template-columns: minmax(0, 1fr) var(--side-w); gap: $gutter; background: transparent;
+  }
+  .race-main {
+    display: flex; flex-direction: column; align-items: center; min-width: 0; min-height: 0;
+    > * { width: min(100%, calc((100dvh - #{$topbar-h} - #{$edge} - 96px) * 16 / 9)); }
+  }
+  .stage { border-radius: 20px; border: 1px solid var(--line); }
+  .stage__top { padding: 14px 14px 0 16px; }
+  .callout { left: 16px; bottom: 16px; font-size: 14px; }
+  .rail { padding: 16px 4px 0; &__togo b { font-size: 30px; } }
+  .race-side {
+    display: flex; flex-direction: column; min-height: 0; padding-top: 16px;
+    border-radius: 20px; background: var(--bg-2); border: 1px solid var(--line); overflow: hidden;
+    &__title { display: block; @include label(11px); color: var(--text-2); padding: 0 16px 6px; }
+  }
+  .order { margin: 0 12px; }
+  .live { padding: 18px 12px 0; }
+  .race-actions { padding: 12px; border-top: 1px solid var(--line); }
+
+  // ---------- Result ----------
+  .view--result {
+    display: grid; grid-template-columns: minmax(0, 1fr) var(--side-w); grid-template-rows: minmax(0, 1fr) auto;
+    column-gap: $gutter; background: transparent;
+  }
+  .result__glow { inset: -10% calc(var(--side-w) + #{$gutter}) auto 0; height: 85%; }
+  .result__scroll { display: contents; }
+  .result__main {
+    grid-column: 1; grid-row: 1 / -1; min-height: 0; overflow-y: auto;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px;
+  }
+  .result__hero { padding-top: 0; }
+  .hero__amount { font-size: clamp(96px, 8.5vw, 150px); }
+  .hero__title { font-size: clamp(64px, 5.5vw, 92px); }
+  .hero__sub { font-size: 16px; }
+  .result__podium {
+    width: 100%; margin-bottom: 0;
+    .podium { max-width: 460px; }
+    .podium__silk { width: 64px; height: 64px; }
+    .podium__step:nth-child(1) .podium__silk { width: 84px; height: 84px; }
+    .podium__step:nth-child(1) .podium__block { height: 104px; }
+    .podium__step:nth-child(2) .podium__block { height: 78px; }
+    .podium__step:nth-child(3) .podium__block { height: 60px; }
+  }
+  .result__list {
+    grid-column: 2; grid-row: 1; min-height: 0; overflow-y: auto; padding: 18px 12px 12px;
+    border-radius: 20px 20px 0 0; background: var(--bg-2); border: 1px solid var(--line); border-bottom: 0;
+    scrollbar-width: thin;
+  }
+  .result__actions {
+    grid-column: 2; grid-row: 2; padding: 12px;
+    border-radius: 0 0 20px 20px; border: 1px solid var(--line); background: var(--bg-2);
+  }
+
+  // ---------- Sheets → centred dialogs; replay sized to the viewport ----------
+  .sheet {
+    left: 50%; right: auto; top: 50%; bottom: auto; width: 480px; max-height: min(720px, 86%); padding-bottom: 0;
+    border-bottom: 1px solid var(--line-2); border-radius: 24px;
+    box-shadow: 0 40px 100px -20px #000;
+    opacity: 0; transform: translate(-50%, -46%) scale(0.98);
+    transition: transform 300ms $ease-out, opacity 200ms ease, visibility 0s linear 300ms;
+    &.is-open { opacity: 1; transform: translate(-50%, -50%); transition: transform 300ms $ease-out, opacity 200ms ease, visibility 0s; }
+    &--tall { height: min(720px, 86%); }
+  }
+  .replay__frame { width: min(100%, 1120px, calc((100dvh - 96px) * 16 / 9)); }
+}
+
+// Wide desktop: the race hero gets its own column next to the runners.
+@include wide-xl {
+  .app { --side-w: 380px; }
+  .view--card {
+    display: grid; grid-template-columns: minmax(300px, 0.62fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr);
+    column-gap: $gutter;
+  }
+  .card-body { margin-top: 0; }
+  .race-head,
+  .view--card.is-compact .race-head {
+    height: 100%; min-height: 0; padding: 28px;
+    flex-direction: column; align-items: stretch; justify-content: flex-end; gap: 0;
+    border-radius: 20px;
+    .eyebrow { opacity: 1; max-height: 20px; }
+    .race-head__title { transform: none; margin: 10px 0 0; }
+    .race-head__no { transform: none; }
+    .race-head__no-label { opacity: 1; }
+  }
+  .race-head {
+    &__bg {
+      background-position: center 40%;
+      &::after {
+        background:
+          linear-gradient(0deg, rgba(5, 13, 9, 0.96) 0%, rgba(5, 13, 9, 0.7) 38%, rgba(5, 13, 9, 0.15) 75%),
+          linear-gradient(90deg, rgba(5, 13, 9, 0.4), transparent 70%);
+      }
+    }
+    &__title { font-size: clamp(52px, 4.6vw, 80px); overflow-wrap: anywhere; }
+    &__blurb { display: block; margin-top: 14px; max-width: 34ch; font-size: 15px; line-height: 1.5; color: var(--text-2); }
+    &__side {
+      position: absolute; top: 22px; right: 24px; padding: 10px 14px; border-radius: 14px;
+      background: rgba(5, 13, 9, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--line);
+    }
+    &__no { font-size: 40px; }
+  }
+}

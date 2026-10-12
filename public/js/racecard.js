@@ -24,6 +24,7 @@ export function renderHeader() {
   $('#raceTitle').textContent = r.venue;
   $('#raceMeta').textContent = `${r.distance}m · ${sport().surface} · ${r.runners} runners`;
   $('#raceNo').textContent = state.raceNo;
+  $('#raceBlurb').textContent = `${sport().title} · ${r.runners} ${sport().nouns} over ${r.distance}m. Place your bets — the race goes off the moment you do.`;
   $('#raceHeadBg').style.backgroundImage = `url(${r.poster})`;
   document.body.style.setProperty('--poster', `url(${new URL(r.poster, location.href).href})`);
 }
@@ -72,7 +73,7 @@ export function renderRunners({ animate = false } = {}) {
   const f = state.field;
   if (animate) { list.scrollTop = 0; $('#viewCard').classList.remove('is-compact'); }
   head.innerHTML = headMarkup();
-  list.innerHTML = f.byOdds.map(no => {
+  list.innerHTML = f.horses.map(no => {   // trap / saddle order (1, 2, 3…), like a printed racecard
     const r = f.runners[no];
     return `<li class="runner" data-h="${no}">
       <div class="runner__silk">${runnerIcon(no)}${saddle(no)}</div>

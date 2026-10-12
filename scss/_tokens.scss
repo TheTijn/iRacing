@@ -33,3 +33,11 @@ $ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 @mixin hover { @media (hover: hover) and (pointer: fine) { &:hover { @content; } } }
 
 @mixin landscape-phone { @media (orientation: landscape) and (max-height: 520px) { @content; } }
+
+// Widescreen desktop layout (docked betslip, multi-column views). Keep in sync with dockMq in betslip.js.
+$bp-wide: 1024px;
+$bp-wide-xl: 1280px;
+$dock-w: 360px;
+$gutter: 20px;
+@mixin wide { @media (min-width: $bp-wide) and (min-height: 600px) { @content; } }
+@mixin wide-xl { @media (min-width: $bp-wide-xl) and (min-height: 600px) { @content; } }

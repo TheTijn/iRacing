@@ -104,10 +104,15 @@ function renderChips() {
     `<input class="stake-input" type="text" inputmode="decimal" placeholder="Other" aria-label="Custom stake" id="customStake">`;
 }
 
+// Desktop / widescreen: the slip is a docked column, always open while betting (matches `wide` in _tokens.scss).
+const dockMq = matchMedia('(min-width: 1024px) and (min-height: 600px)');
+const docked = () => dockMq.matches;
+
 export function render({ added = false } = {}) {
   const bets = state.slip;
-  const visible = state.phase === 'betting' && bets.length > 0;
+  const visible = state.phase === 'betting' && (bets.length > 0 || docked());
   slip.classList.toggle('is-visible', visible);
+  slip.classList.toggle('is-empty', !bets.length);
   if (!visible && open) setOpen(false);
 
   const cost = slipCost();
@@ -116,7 +121,7 @@ export function render({ added = false } = {}) {
   $('#slipReturn').textContent = money(state.field ? maxReturn(bets, state.field.horses, state.field.places) : 0);
   $('#placeAmt').textContent = money(cost);
   $('#btnPlace').disabled = !bets.length;
-  if (open) { tickets.innerHTML = bets.map(ticketMarkup).join(''); renderChips(); }
+  if (open || docked()) { tickets.innerHTML = bets.map(ticketMarkup).join(''); renderChips(); }
 
   if (added && !reducedMotion()) {
     gsap.fromTo('#slipCount', { scale: 1.5 }, { scale: 1, duration: 0.45, ease: 'back.out(3)' });
@@ -126,13 +131,13 @@ export function render({ added = false } = {}) {
 }
 
 function measure() {
-  const visible = slip.classList.contains('is-visible');
+  const visible = slip.classList.contains('is-visible') && !docked();
   const h = visible ? bar.offsetHeight + foot.offsetHeight : 0;
   app.style.setProperty('--slip-h', `${h}px`);
 }
 
 function setOpen(v) {
-  if (v === open) return;
+  if (v === open || (v && docked())) return;
   open = v;
   slip.classList.toggle('is-open', v);
   bar.setAttribute('aria-expanded', v);
@@ -203,6 +208,8 @@ export function initSlip() {
     emit('slip:place');
   });
   window.addEventListener('resize', () => requestAnimationFrame(measure));
+  dockMq.addEventListener('change', () => { setOpen(false); render(); });
+  on('phase', () => render());
   on('settings:changed', () => render());
 }
 

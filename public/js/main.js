@@ -15,7 +15,8 @@ import { gsap, reducedMotion } from './fx.js';
 const app = $('#app');
 const params = new URLSearchParams(location.search);
 const forcedRace = params.get('race');   // debug: ?race=190 / ?race=d01 plays that video every time
-const forcedSport = params.get('sport'); // ?sport=dogs opens on that sport
+const forcedSport = params.get('sport'); // debug: ?sport=horses opens on that sport
+const DEFAULT_SPORT = 'dogs';            // the game focuses on greyhounds; horses stay reachable via the debug params
 const bags = {};                         // shuffle bag per sport
 const lastRaceId = {};
 
@@ -144,17 +145,11 @@ $('#btnReplayClose').addEventListener('click', closeReplay);
 replayEl.addEventListener('click', e => { if (e.target === replayEl) closeReplay(); });
 on('escape', closeReplay);
 
-// ---------- Sport (Horses / Dogs toggle) ----------
-const sportToggle = $('#sportToggle');
+// ---------- Sport ----------
+// No sport switch in the UI for now: always dogs; horses via ?sport= / ?race= or __ir.setSport() for QA.
 function applySport() {
   const s = sport();
   app.dataset.sport = s.key;
-  sportToggle.dataset.active = s.key;
-  $$('button', sportToggle).forEach(b => {
-    const on = b.dataset.sport === s.key;
-    b.classList.toggle('is-active', on);
-    b.setAttribute('aria-checked', on);
-  });
   $('#stageLoaderText').textContent = s.loading;
   $('#replayTag').textContent = s.replayTag;
 }
@@ -168,8 +163,6 @@ function setSport(key) {
   closeReplay();
   closeSlip();
   state.sport = key;
-  state.settings.sport = key;
-  saveSettings();
   state.slip = [];
   state.lastPlaced = [];    // picks belong to the other sport's field
   applySport();
@@ -178,15 +171,6 @@ function setSport(key) {
   showView('betting');
   renderSlip();
   if (hadBets) toast('Betslip cleared for the new field');
-}
-
-function initSportToggle() {
-  sportToggle.addEventListener('click', e => {
-    const b = e.target.closest('button[data-sport]');
-    if (b && !b.disabled) setSport(b.dataset.sport);
-  });
-  // No switching while a race is running (bets are riding on it).
-  on('phase', phase => $$('button', sportToggle).forEach(b => { b.disabled = phase === 'racing' || phase === 'loading'; }));
 }
 
 // ---------- Settings ----------
@@ -253,10 +237,9 @@ async function init() {
     throw e;
   }
   const forced = forcedRace && state.races.find(r => r.id === forcedRace);
-  const want = [forced?.sport, forcedSport, state.settings.sport].find(k => SPORTS[k] && state.races.some(r => r.sport === k));
+  const want = [forced?.sport, forcedSport, DEFAULT_SPORT].find(k => SPORTS[k] && state.races.some(r => r.sport === k));
   state.sport = want || state.races[0].sport;
   applySport();
-  initSportToggle();
   initSheets();
   initSlip();
   initRaceCard();

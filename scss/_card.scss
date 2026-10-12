@@ -169,3 +169,7 @@
   &__err { font-size: 13.5px; font-weight: 600; color: var(--text); }
   .btn { flex: none; height: 44px; padding: 0 16px; }
 }
+
+// Desktop-only pieces (laid out in _desktop.scss); on phones the body wrapper is transparent to layout.
+.card-body { display: contents; }
+.race-head__blurb { display: none; }

@@ -69,6 +69,7 @@ export function renderResult(o, { canRebet }) {
   podium.innerHTML = `<ol class="podium">${podiumMarkup(o.order)}</ol>`;
   betsEl.innerHTML = o.bets.map(betMarkup).join('');
   $('.result__scroll', view).scrollTop = 0;
+  $('.result__list', view).scrollTop = 0;   // its own scroller in the desktop layout
 
   const rebetCost = slipCost(state.lastPlaced);
   const rebetLabel = `<span>Rebet</span><small>${money(rebetCost)} · same picks</small>`;

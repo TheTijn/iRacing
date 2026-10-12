@@ -3,7 +3,7 @@ import { SPORTS } from './sports.js';
 
 export const state = {
   phase: 'loading',          // loading | betting | racing | result
-  sport: 'horses',           // horses | dogs (see sports.js)
+  sport: 'dogs',             // dogs | horses (see sports.js); dogs is the default
   races: [],                 // telemetry from data/races.json (all sports)
   race: null,                // current race telemetry (video)
   raceNo: 1177,

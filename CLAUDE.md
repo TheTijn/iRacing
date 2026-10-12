@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Instant Racing: a mobile-first instant horse **and greyhound** racing betting game (play money). A Horses/Dogs toggle in the top bar switches sport; it is one engine with per-sport config in `public/js/sports.js`. Sibling of iHockey, and it uses the same deploy model: an Express static server, SCSS, and vanilla ES modules with no bundler.
+Instant Racing: a mobile-first instant **greyhound** racing betting game (play money), with a widescreen desktop layout. It is one engine with per-sport config in `public/js/sports.js`: horses are still supported, but there is no sport switch in the UI for now. **Dogs is always the default** (`DEFAULT_SPORT` in `main.js`); horses are reachable only through the debug params. Sibling of iHockey, and it uses the same deploy model: an Express static server, SCSS, and vanilla ES modules with no bundler.
 
 ## Commands
 
@@ -13,7 +13,7 @@ npm run transcode    # re-encode both sports' sources → public/assets/races/(d
 npm run telemetry:dogs  # derive "Dog racing videos/*.txt" from the footage + *.keys.json (needs ffmpeg)
 ```
 
-Debug: `?race=190` / `?race=d01` forces a specific video every race (and switches to its sport). `?sport=dogs` opens on dogs. `window.__ir.state`, `__ir.setSport('dogs')` in the console.
+Debug: `?race=190` / `?race=d01` forces a specific video every race (and switches to its sport). `?sport=horses` opens on horses. `window.__ir.state`, `__ir.setSport('horses')` in the console.
 
 ## Race assets pipeline
 
@@ -49,7 +49,7 @@ Debug: `?race=190` / `?race=d01` forces a specific video every race (and switche
 | `ui.js`, `fx.js`, `silks.js`, `store.js` | View transitions/sheets/toast (emits `phase`), GSAP + canvas particles, `runnerIcon()` silk / trap-jacket SVGs, persistence + money/odds formatting |
 
 Key rules:
-- **Sport**: `state.sport` (`horses`|`dogs`, persisted in `settings.sport`); `sport()` in `state.js` returns its config. Each race in `races.json` carries `sport` and `venue`. Switching is only allowed in the betting/result phases (toggle buttons are disabled while racing); it clears the slip and Rebet picks and starts a new race. Balance and history are shared (history entries are tagged with the sport). Never hard-code "horse" copy: use `sport().noun` / `betHint()`.
+- **Sport**: `state.sport` (`dogs`|`horses`, not persisted; a stale `settings.sport` from the old toggle is dropped on load); `sport()` in `state.js` returns its config. Each race in `races.json` carries `sport` and `venue`. `setSport()` (debug only) is only allowed in the betting/result phases; it clears the slip and Rebet picks and starts a new race. Balance and history are shared (history entries are tagged with the sport). Never hard-code "horse" copy: use `sport().noun` / `betHint()`.
 - `BET_TYPES` keys are the same for both sports, so `settle()`/pricing never branch on sport. Only labels and the offered exotics differ. With 6 runners `placesFor()` pays the top 2.
 - **Every bet uses one shape**: `{ type, stake (per combo), box, legs, combos: [{sel, price}] }`. `settle(bet, finishOrder)` handles every market, and so do live status and max return. Prices are fixed when the bet is added.
 - **Balance**: the stake is deducted when the bet is placed. Winnings are added to `state.balance` at the finish, but the pill only animates on the result screen. Don't show winnings before the reveal (iHockey's mistake).
@@ -60,11 +60,13 @@ Key rules:
 
 ## Styles
 
-`scss/style.scss` pulls in the partials (`_tokens`, `_base`, `_card`, `_slip`, `_race`, `_result`, `_sheets`, `_responsive`). **`public/css/style.css` is compiled output, so never edit it.**
+`scss/style.scss` pulls in the partials (`_tokens`, `_base`, `_card`, `_slip`, `_race`, `_result`, `_sheets`, `_responsive`, `_desktop`). **`public/css/style.css` is compiled output, so never edit it.**
 - Colours are CSS custom properties in `_base.scss :root`. Easing, breakpoints and mixins are in `_tokens.scss`.
 - Fonts: Big Shoulders Display (display/numbers) and Instrument Sans (UI, weight 500).
 - Layouts:
   - Full-bleed on phones.
   - Landscape phones get a full-screen video HUD.
-  - At ≥768×600 the app becomes a 440px shell over a blurred race still.
+  - At 768–1023px wide (and ≥600 tall) the app becomes a 440px shell over a blurred race still.
+  - At ≥1024×600 there is a widescreen desktop layout (`_desktop.scss`; mixins `wide` / `wide-xl` in `_tokens.scss`). The app fills the viewport, capped at 1680px, and the betslip becomes a docked right-hand column that is always open while betting (`dockMq` in `betslip.js` must match `wide`). Racing: the video and distance rail sit on the left, with running order, live bets and Skip in a side panel. Result: the hero and podium sit on the left, with bets and actions on the right. At ≥1280px the race card gets a tall hero column. The wrappers `.card-body`, `.race-main`, `.race-side`, `.result__main` and `.result__list` exist for these columns. On phones the first three are `display: contents`, so the mobile layout is unchanged.
+  - Sheets become centred dialogs on desktop.
 - Bump `?v=` on the CSS link when deploying CSS changes. The JS modules have no version query, so a hard refresh may be needed after a deploy.

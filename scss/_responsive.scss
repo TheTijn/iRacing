@@ -10,7 +10,7 @@
   .lbet { padding: 7px 10px 7px 14px; }
   .live { padding-top: 6px; }
 }
-// Narrow phones: the sport toggle needs the room, so the wordmark drops to its mark.
+// Narrow phones: the wordmark drops to its mark.
 @media (max-width: 419px) {
   .wordmark__text { display: none; }
 }
@@ -39,7 +39,7 @@
   }
 }
 
-// Desktop / tablet: a device-like shell over an atmospheric backdrop.
+// Tablet and up: an atmospheric backdrop behind the app (widescreen layout lives in _desktop.scss).
 @media (min-width: $bp-desktop) and (min-height: 600px) {
   body {
     display: grid; place-items: center; min-height: 100vh; background: var(--bg);
@@ -47,6 +47,9 @@
     &::before { background: var(--poster, none) center / cover no-repeat; filter: blur(28px) saturate(0.7); transform: scale(1.12); opacity: 0.5; }
     &::after { background: radial-gradient(55% 60% at 50% 45%, rgba(63, 229, 140, 0.08), transparent 70%), linear-gradient(180deg, rgba(5, 13, 9, 0.55), rgba(5, 13, 9, 0.92)); }
   }
+}
+// Tablets: a device-like shell.
+@media (min-width: $bp-desktop) and (max-width: $bp-wide - 1px) and (min-height: 600px) {
   .app {
     width: 440px; height: min(100dvh - 48px, 900px); border-radius: 32px;
     border: 1px solid var(--line-2);
