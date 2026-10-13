@@ -42,7 +42,7 @@ Debug: `?race=190` / `?race=d01` forces a specific video every race (and switche
 | `pricing.js` | **Pure** (also imported by node tests): bet types, Harville exotic pricing, combination expansion, `settle()`, exact `maxReturn()`, `liveState()`, odds formats |
 | `sports.js` | Pure per-sport config: runner profiles, silks/traps, surface, wording, exotic list, UK greyhound labels (Forecast/Tricast, boxed = Reverse Forecast/Combination Tricast), `betLabel()`/`betHint()` |
 | `field.js` | Pure: random profiles of the sport → saddle/trap numbers; rescales prices to a fixed book (11% win, 11% per place) |
-| `lobby.js` | Lobby view: one thumbnail tile per sport (poster of its first race), `Playing`/`Resume` on the current one |
+| `lobby.js` | Lobby view: one thumbnail tile per sport (venue + running thumbnail of its first race), `Playing`/`Resume` on the current one |
 | `racecard.js` | Runner list, Win/Place odds buttons, exotic pick grid + builder bar |
 | `betslip.js` | Bottom-sheet slip, stakes, bet descriptions (shared by other views) |
 | `race.js` | Video → frame clock (timer fallback for data saver / video failure), distance rail, running-order strip, live bet states, callouts, skip, finish beat |
