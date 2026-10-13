@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Instant Racing: a mobile-first instant **greyhound** racing betting game (play money), with a widescreen desktop layout. It is one engine with per-sport config in `public/js/sports.js`: horses are still supported, but there is no sport switch in the UI for now. **Dogs is always the default** (`DEFAULT_SPORT` in `main.js`); horses are reachable only through the debug params. Sibling of iHockey, and it uses the same deploy model: an Express static server, SCSS, and vanilla ES modules with no bundler.
+Instant Racing: a mobile-first instant **greyhound** racing betting game (play money), with a widescreen desktop layout. It is one engine with per-sport config in `public/js/sports.js`. **Dogs is always the default** (`DEFAULT_SPORT` in `main.js`); horses are picked in the **lobby**, opened by tapping the wordmark's two stripes (or through the debug params). Sibling of iHockey, and it uses the same deploy model: an Express static server, SCSS, and vanilla ES modules with no bundler.
 
 ## Commands
 
@@ -37,11 +37,12 @@ Debug: `?race=190` / `?race=d01` forces a specific video every race (and switche
 
 | Module | Role |
 |---|---|
-| `main.js` | Boot + phase machine (`betting → racing → result`; ~1.2s finish-line beat on natural finishes, none on Skip/Instant), shuffle bag per sport, `setSport()`, rebet/next, settings, history, replay |
+| `main.js` | Boot + phase machine (`betting → racing → result`, plus `lobby` between races; ~1.2s finish-line beat on natural finishes, none on Skip/Instant), shuffle bag per sport, `setSport()`, rebet/next, settings, history, replay |
 | `state.js` | Single mutable `state` + tiny event bus (`emit`/`on`) + `$`/`$$` |
 | `pricing.js` | **Pure** (also imported by node tests): bet types, Harville exotic pricing, combination expansion, `settle()`, exact `maxReturn()`, `liveState()`, odds formats |
 | `sports.js` | Pure per-sport config: runner profiles, silks/traps, surface, wording, exotic list, UK greyhound labels (Forecast/Tricast, boxed = Reverse Forecast/Combination Tricast), `betLabel()`/`betHint()` |
 | `field.js` | Pure: random profiles of the sport → saddle/trap numbers; rescales prices to a fixed book (11% win, 11% per place) |
+| `lobby.js` | Lobby view: one thumbnail tile per sport (poster of its first race), `Playing`/`Resume` on the current one |
 | `racecard.js` | Runner list, Win/Place odds buttons, exotic pick grid + builder bar |
 | `betslip.js` | Bottom-sheet slip, stakes, bet descriptions (shared by other views) |
 | `race.js` | Video → frame clock (timer fallback for data saver / video failure), distance rail, running-order strip, live bet states, callouts, skip, finish beat |
@@ -49,7 +50,8 @@ Debug: `?race=190` / `?race=d01` forces a specific video every race (and switche
 | `ui.js`, `fx.js`, `silks.js`, `store.js` | View transitions/sheets/toast (emits `phase`), GSAP + canvas particles, `runnerIcon()` silk / trap-jacket SVGs, persistence + money/odds formatting |
 
 Key rules:
-- **Sport**: `state.sport` (`dogs`|`horses`, not persisted; a stale `settings.sport` from the old toggle is dropped on load); `sport()` in `state.js` returns its config. Each race in `races.json` carries `sport` and `venue`. `setSport()` (debug only) is only allowed in the betting/result phases; it clears the slip and Rebet picks and starts a new race. Balance and history are shared (history entries are tagged with the sport). Never hard-code "horse" copy: use `sport().noun` / `betHint()`.
+- **Sport**: `state.sport` (`dogs`|`horses`, not persisted; a stale `settings.sport` from the old toggle is dropped on load); `sport()` in `state.js` returns its config, including `brand` (the wordmark's second line and the page title; "Games" while in the lobby). Each race in `races.json` carries `sport` and `venue`.
+- **Lobby**: opens from betting/result only (a toast during a race). Picking another sport calls `setSport()`; picking the current one goes back to the race card as it was, or starts the next race if the lobby was opened from the result screen. Escape or the stripes again also resume. `setSport()` is only allowed in the lobby/betting/result phases; it clears the slip and Rebet picks and starts a new race. Balance and history are shared (history entries are tagged with the sport). Never hard-code "horse" copy: use `sport().noun` / `betHint()`.
 - `BET_TYPES` keys are the same for both sports, so `settle()`/pricing never branch on sport. Only labels and the offered exotics differ. With 6 runners `placesFor()` pays the top 2.
 - **Every bet uses one shape**: `{ type, stake (per combo), box, legs, combos: [{sel, price}] }`. `settle(bet, finishOrder)` handles every market, and so do live status and max return. Prices are fixed when the bet is added.
 - **Balance**: the stake is deducted when the bet is placed. Winnings are added to `state.balance` at the finish, but the pill only animates on the result screen. Don't show winnings before the reveal (iHockey's mistake).

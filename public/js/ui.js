@@ -33,7 +33,7 @@ export function renderBalance({ animate = false } = {}) {
 }
 
 // ---------- Views ----------
-const views = { betting: '#viewCard', racing: '#viewRace', result: '#viewResult' };
+const views = { lobby: '#viewLobby', betting: '#viewCard', racing: '#viewRace', result: '#viewResult' };
 let current = null;
 
 export function showView(phase, { instant = false } = {}) {

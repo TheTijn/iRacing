@@ -61,7 +61,7 @@ const TRAPS = {
 
 export const SPORTS = {
   horses: {
-    key: 'horses', name: 'Horses', title: 'Horse racing',
+    key: 'horses', name: 'Horses', title: 'Horse racing', brand: 'Horse Racing',
     noun: 'horse', nouns: 'horses', icon: 'silk',
     surface: 'Turf', profiles: HORSE_PROFILES, colours: SILKS,
     exotics: EXOTICS,
@@ -71,7 +71,7 @@ export const SPORTS = {
     replayTag: 'Replay · Photo finish',
   },
   dogs: {
-    key: 'dogs', name: 'Dogs', title: 'Greyhound racing',
+    key: 'dogs', name: 'Dogs', title: 'Greyhound racing', brand: 'Greyhounds',
     noun: 'dog', nouns: 'dogs', icon: 'trap',
     surface: 'Sand', profiles: DOG_PROFILES, colours: TRAPS,
     // UK greyhound markets: Forecast / Tricast, boxed as Reverse Forecast / Combination Tricast.

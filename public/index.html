@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#06100B">
   <meta name="description" content="Instant greyhound racing — pick your dogs, watch the race, get paid in under a minute.">
-  <title>Instant Racing</title>
+  <title>Instant Greyhounds</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=Instrument+Sans:wght@400..700&display=swap">
-  <link rel="stylesheet" href="css/style.css?v=7">
+  <link rel="stylesheet" href="css/style.css?v=8">
   <link rel="preload" href="data/races.json" as="fetch" crossorigin>
 </head>
 <body>
@@ -46,11 +46,11 @@
 
     <!-- ============ TOP BAR ============ -->
     <header class="topbar">
-      <div class="wordmark" aria-label="Instant Racing">
-        <span class="wordmark__mark" aria-hidden="true">
+      <div class="wordmark">
+        <button class="wordmark__mark" id="btnLobby" aria-label="Lobby: all games">
           <svg viewBox="0 0 32 32"><path d="M4 26 L14 6 h6 L10 26z" fill="currentColor"/><path d="M15 26 L25 6 h3 L18 26z" fill="currentColor" opacity=".45"/></svg>
-        </span>
-        <span class="wordmark__text"><b>Instant</b><span>Racing</span></span>
+        </button>
+        <span class="wordmark__text"><b>Instant</b><span id="brandName">Greyhounds</span></span>
       </div>
       <div class="topbar__right">
         <div class="balance" id="balance" aria-live="polite">
@@ -63,6 +63,17 @@
     </header>
 
     <main class="views">
+      <!-- ============ LOBBY ============ -->
+      <section class="view view--lobby" id="viewLobby" aria-label="Lobby">
+        <div class="lobby">
+          <header class="lobby__head">
+            <p class="eyebrow"><span class="dot"></span>Lobby</p>
+            <h1 class="lobby__title">Pick a game</h1>
+          </header>
+          <div class="lobby__grid" id="lobbyGrid"></div>
+        </div>
+      </section>
+
       <!-- ============ RACE CARD ============ -->
       <section class="view view--card" id="viewCard" aria-label="Race card">
         <div class="race-head" id="raceHead">

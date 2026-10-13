@@ -10,13 +10,14 @@ import { initSlip, render as renderSlip, slipCost, describeSel, betTitle, closeS
 import * as race from './race.js';
 import { initResults, renderResult, cancelCelebration, resultReady } from './results.js';
 import { toast, renderBalance, showView, initSheets, openSheetEl, closeSheet } from './ui.js';
+import { initLobby, renderLobby } from './lobby.js';
 import { gsap, reducedMotion } from './fx.js';
 
 const app = $('#app');
 const params = new URLSearchParams(location.search);
 const forcedRace = params.get('race');   // debug: ?race=190 / ?race=d01 plays that video every time
 const forcedSport = params.get('sport'); // debug: ?sport=horses opens on that sport
-const DEFAULT_SPORT = 'dogs';            // the game focuses on greyhounds; horses stay reachable via the debug params
+const DEFAULT_SPORT = 'dogs';            // the app opens on greyhounds; horses are picked in the lobby
 const bags = {};                         // shuffle bag per sport
 const lastRaceId = {};
 
@@ -155,20 +156,29 @@ replayVideo.addEventListener('timeupdate', () => {
 });
 $('#btnReplayClose').addEventListener('click', closeReplay);
 replayEl.addEventListener('click', e => { if (e.target === replayEl) closeReplay(); });
-on('escape', closeReplay);
+on('escape', () => { closeReplay(); if (state.phase === 'lobby') pickGame(state.sport); });
 
 // ---------- Sport ----------
-// No sport switch in the UI for now: always dogs; horses via ?sport= / ?race= or __ir.setSport() for QA.
+// The lobby (the wordmark's stripes) switches sport; ?sport= / ?race= / __ir.setSport() for QA.
+/** Wordmark + page title: 'Instant Games' in the lobby, else the sport being played. */
+function renderBrand() {
+  const brand = state.phase === 'lobby' ? 'Games' : sport().brand;
+  $('#brandName').textContent = brand;
+  document.title = `Instant ${brand}`;
+}
+on('phase', renderBrand);
+
 function applySport() {
   const s = sport();
   app.dataset.sport = s.key;
+  renderBrand();
   $('#stageLoaderText').textContent = s.loading;
   $('#replayTag').textContent = s.replayTag;
 }
 
 /** Switch sport between races: new field from that sport's videos. Same wallet and history. */
 function setSport(key) {
-  if (key === state.sport || !SPORTS[key] || !['betting', 'result'].includes(state.phase)) return;
+  if (key === state.sport || !SPORTS[key] || !['lobby', 'betting', 'result'].includes(state.phase)) return;
   if (!state.races.some(r => r.sport === key)) { toast(`No ${SPORTS[key].name.toLowerCase()} races available`, true); return; }
   const hadBets = state.slip.length > 0;
   cancelCelebration();
@@ -183,6 +193,29 @@ function setSport(key) {
   showView('betting');
   renderSlip();
   if (hadBets) toast('Betslip cleared for the new field');
+}
+
+// ---------- Lobby ----------
+// Reachable between races only. Picking the game being played goes back to it: the race card as it was
+// (slip intact), or a fresh race when the lobby was opened from the result screen.
+let lobbyFrom = 'betting';
+function openLobby() {
+  if (state.phase === 'lobby') { pickGame(state.sport); return; }
+  if (!['betting', 'result'].includes(state.phase)) { toast('The lobby opens after this race'); return; }
+  if (state.phase === 'result' && !resultReady()) return;
+  lobbyFrom = state.phase;
+  cancelCelebration();
+  closeReplay();
+  closeSlip();
+  closeSheet();
+  renderLobby();
+  showView('lobby');
+}
+function pickGame(key) {
+  if (state.phase !== 'lobby') return;
+  if (key !== state.sport) setSport(key);
+  else if (lobbyFrom === 'result') nextRace();
+  else showView('betting');
 }
 
 // ---------- Settings ----------
@@ -257,6 +290,8 @@ async function init() {
   initRaceCard();
   race.initRace();
   initSettings();
+  initLobby({ onPick: pickGame });
+  $('#btnLobby').addEventListener('click', openLobby);
   initResults({
     onAction: act => {
       // Ignore taps while the result view is still fading in/out (prevents double rebet / double deduction)

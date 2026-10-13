@@ -2,7 +2,7 @@
 import { SPORTS } from './sports.js';
 
 export const state = {
-  phase: 'loading',          // loading | betting | racing | result
+  phase: 'loading',          // loading | lobby | betting | racing | result
   sport: 'dogs',             // dogs | horses (see sports.js); dogs is the default
   races: [],                 // telemetry from data/races.json (all sports)
   race: null,                // current race telemetry (video)

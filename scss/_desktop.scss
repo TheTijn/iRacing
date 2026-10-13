@@ -30,7 +30,7 @@ $app-h: min(100dvh, #{$app-max-h});   // the app's height; layout maths uses thi
   .topbar { grid-column: 1 / -1; min-height: $topbar-h; padding: 12px $edge 10px; }
   .wordmark {
     gap: 10px;
-    &__mark svg { width: 30px; height: 30px; }
+    &__mark { width: 40px; height: 40px; svg { width: 30px; height: 30px; } }
     &__text { b, span { font-size: 20px; } }
   }
   .balance { padding: 6px 14px; margin-right: 8px; &__value { font-size: 22px; } }
@@ -41,6 +41,14 @@ $app-h: min(100dvh, #{$app-max-h});   // the app's height; layout maths uses thi
   .app:not([data-phase='betting']) .views { grid-column: 1 / -1; }
   .view { inset: 0 $gutter $edge $edge; }
   .app:not([data-phase='betting']) .view { right: $edge; }
+
+  // ---------- Lobby: tiles side by side ----------
+  .lobby { padding: 8px 0 0; gap: 18px; }
+  .lobby__title { font-size: 44px; }
+  .lobby__grid { grid-template-columns: 1fr 1fr; grid-auto-rows: minmax(0, 1fr); gap: $gutter; }
+  .game { padding: 24px; }
+  .game__name { b { font-size: 56px; } span { font-size: 24px; } }
+  .game__cta { height: 46px; padding: 0 14px 0 20px; font-size: 15px; }
 
   // ---------- Betslip: docked column ----------
   .slip {
