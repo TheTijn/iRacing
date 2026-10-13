@@ -13,7 +13,7 @@ export function renderLobby() {
     if (!races.length) return '';
     const r = races[0];
     const current = s.key === state.sport;
-    const thumb = new URL(r.poster, location.href).href;   // absolute: a var() url resolves against the stylesheet
+    const thumb = new URL(r.thumb || r.poster, location.href).href;   // absolute: a var() url resolves against the stylesheet
     return `<button class="game${current ? ' is-current' : ''}" data-sport="${s.key}" style="--thumb:url('${thumb}')"
         aria-label="${r.venue}, Instant ${s.brand}${current ? ' (playing now)' : ''}">
       <span class="game__bg" aria-hidden="true"></span>

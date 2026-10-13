@@ -18,7 +18,7 @@ Debug: `?race=190` / `?race=d01` forces a specific video every race (and switche
 ## Race assets pipeline
 
 - The source videos in `Test Videos/` are **MPEG-4 Part 2**, which browsers can't play, and are 46MB each. They are gitignored.
-  - `scripts/transcode.sh` makes 540p H.264 `+faststart` versions (~10MB, trimmed to 65s) plus a poster JPG.
+  - `scripts/transcode.sh` makes 540p H.264 `+faststart` versions (~10MB, trimmed to 65s) plus a poster JPG (the gates, used as the `<video>` poster) and a `-run.jpg` thumbnail ~3s after the release (horses 3.5s, dogs 7s), used by the lobby tiles, race card header and blurred backdrop (`thumb` in `races.json`, falling back to `poster`).
 - Each video has a telemetry `.txt` with **one line per frame at 25 fps**: `phase, leaderDistanceToGo, horse numbers in running order (leader first)`.
   - Phases: `G` in the gates, `I` running, `R` pull-up, `1`/`2` slow-mo finish replay, `3` empty shot.
   - The finish is the first `I` frame with distance 0.

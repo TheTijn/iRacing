@@ -25,8 +25,8 @@ export function renderHeader() {
   $('#raceMeta').textContent = `${r.distance}m · ${sport().surface} · ${r.runners} runners`;
   $('#raceNo').textContent = state.raceNo;
   $('#raceBlurb').textContent = `${sport().title} · ${r.runners} ${sport().nouns} over ${r.distance}m. Place your bets — the race goes off the moment you do.`;
-  $('#raceHeadBg').style.backgroundImage = `url(${r.poster})`;
-  document.body.style.setProperty('--poster', `url(${new URL(r.poster, location.href).href})`);
+  $('#raceHeadBg').style.backgroundImage = `url(${r.thumb || r.poster})`;
+  document.body.style.setProperty('--poster', `url(${new URL(r.thumb || r.poster, location.href).href})`);
 }
 
 function formMarkup(form) {

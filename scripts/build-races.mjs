@@ -76,7 +76,7 @@ for (const src of SOURCES) {
 
     races.push({
       id, sport: src.sport, venue, distance, runners, fps,
-      src: `${base}.mp4`, poster: `${base}.jpg`,
+      src: `${base}.mp4`, poster: `${base}.jpg`, thumb: `${base}-run.jpg`,
       gateEndFrame, finishFrame,
       replayStart: replayStart > 0 ? replayStart : null,
       replayEnd: replayStart > 0 && replayEnd > 0 ? Math.min(replayEnd, lastFrame) : null,
