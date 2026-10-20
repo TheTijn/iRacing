@@ -58,3 +58,15 @@ test('greyhound fields: six traps, two places, coherent market', () => {
     for (const h of f.horses) assert.ok(f.place[h] <= f.win[h] && f.place[h] >= 1.01, `seed ${seed}: #${h}`);
   }
 });
+
+test('eight-dog fields (Summerset Park): three places, a jacket for every trap', () => {
+  for (let seed = 1; seed <= 300; seed++) {
+    const f = buildField(8, mulberry(seed), 'dogs');
+    assert.deepEqual(f.horses, [1, 2, 3, 4, 5, 6, 7, 8]);
+    assert.equal(f.places, 3);
+    assert.equal(new Set(Object.values(f.runners).map(r => r.name)).size, 8, 'unique names');
+    assert.ok(Object.values(f.runners).every(r => r.silk && r.silk.body), 'every trap has a jacket');
+    const winBook = f.horses.reduce((s, h) => s + 1 / f.win[h], 0);
+    assert.ok(Math.abs(winBook - WIN_BOOK) < 0.01, `seed ${seed}: win book ${winBook}`);
+  }
+});

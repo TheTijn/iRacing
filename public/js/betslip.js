@@ -21,14 +21,26 @@ let open = false;
 export const newId = () => 'IR' + Math.random().toString(36).slice(2, 8).toUpperCase();
 const simpleKey = (type, h) => `${type}:${h}`;
 
+/** Identity of a bet on the slip (the same selection can't be added twice). */
+export function betKey(bet) {
+  const t = BET_TYPES[bet.type];
+  if (t.set) return `${bet.type}:${bet.side}`;
+  if (t.size === 1) return simpleKey(bet.type, bet.legs[0][0]);
+  return `${bet.type}:${bet.box ? 'box' : ''}:${bet.legs.map(l => l.slice().sort((a, b) => a - b).join('.')).join('|')}`;
+}
+
 // ---------- Descriptions (shared by slip, live race and results) ----------
 export function horseTag(h, { name = true } = {}) {
   const r = state.field.runners[h];
   return `<span class="mini-silk">${runnerIcon(h)}<b>#${h}</b></span>${name ? `<span class="ticket__name">${r.name}</span>` : ''}`;
 }
 
+const runnerChips = nos => nos.map(h => `<span class="mini-silk">${runnerIcon(h)}</span>`).join('');
+
 export function describeSel(bet) {
   const { type, legs, box } = bet;
+  if (BET_TYPES[type].set) return `<span class="sel-side">${bet.side}</span>${runnerChips(legs[0])}`;
+  if (BET_TYPES[type].pair) return `${horseTag(legs[0][0])}<span class="sep">ahead of</span>${horseTag(legs[1][0], { name: false })}`;
   if (BET_TYPES[type].size === 1) return horseTag(legs[0][0]);
   if (BET_TYPES[type].ordered && !box) {
     const single = legs.every(l => l.length === 1);
@@ -41,12 +53,12 @@ export function describeSel(bet) {
 export const betTitle = bet => betLabel(state.sport, bet.type, bet.box);
 
 // ---------- Slip mutations ----------
-export const hasSimple = (type, h) => state.slip.some(b => b.key === simpleKey(type, h));
+export const hasSimple = (type, h) => hasKey(simpleKey(type, h));
+export const hasKey = key => state.slip.some(b => b.key === key);
 
 export function addBet(bet) {
   if (state.slip.length >= CONFIG.maxBets) { toast(`Max ${CONFIG.maxBets} bets per slip`, true); return false; }
-  const key = bet.key || (BET_TYPES[bet.type].size === 1 ? simpleKey(bet.type, bet.legs[0][0]) :
-    `${bet.type}:${bet.box ? 'box' : ''}:${bet.legs.map(l => l.slice().sort((a, b) => a - b).join('.')).join('|')}`);
+  const key = bet.key || betKey(bet);
   if (state.slip.some(b => b.key === key)) { toast('Already on your slip'); return false; }
   state.slip.push({ ...bet, key, id: bet.id || newId() });
   haptic(8);
@@ -60,6 +72,13 @@ export function toggleSimple(type, h) {
   if (i >= 0) { state.slip.splice(i, 1); changed(); return; }
   const price = (type === 'WIN' ? state.field.win : state.field.place)[h];
   addBet({ type, stake: state.stake, box: false, legs: [[h]], combos: [{ sel: [h], price }] });
+}
+
+/** Add a bet, or take it off the slip if it's already there (price buttons that toggle). */
+export function toggleBet(bet) {
+  const i = state.slip.findIndex(b => b.key === betKey(bet));
+  if (i >= 0) { state.slip.splice(i, 1); changed(); return; }
+  addBet(bet);
 }
 
 export function removeBet(id) {
@@ -104,8 +123,8 @@ function renderChips() {
     `<input class="stake-input" type="text" inputmode="decimal" placeholder="Other" aria-label="Custom stake" id="customStake">`;
 }
 
-// Desktop / widescreen: the slip is a docked column, always open while betting (matches `wide` in _tokens.scss).
-const dockMq = matchMedia('(min-width: 1024px) and (min-height: 600px)');
+// Desktop / widescreen: the slip is a docked column, always open while betting (matches `wide` = Bootstrap lg in _tokens.scss).
+const dockMq = matchMedia('(min-width: 1024px)');
 const docked = () => dockMq.matches;
 
 export function render({ added = false } = {}) {

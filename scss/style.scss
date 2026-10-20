@@ -1,6 +1,9 @@
 // Instant Racing — source of truth for styles. Compiled to public/css/style.css (never edit that).
+// Bootstrap (layout only) comes first so the app's own rules win ties.
+@use 'bootstrap';
 @use 'base';
 @use 'card';
+@use 'h2h';
 @use 'slip';
 @use 'race';
 @use 'result';

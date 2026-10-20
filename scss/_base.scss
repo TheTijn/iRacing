@@ -59,8 +59,6 @@ svg { display: block; }
   position: relative;
   height: 100vh;
   height: 100dvh;
-  display: grid;
-  grid-template-rows: auto 1fr;
   overflow: hidden;
   isolation: isolate;
   background:
@@ -74,25 +72,24 @@ svg { display: block; }
 }
 
 // ---------- Top bar ----------
+// (flex layout via Bootstrap classes in index.html; display stays here because the landscape race HUD hides it)
 .topbar {
-  position: relative; z-index: 30;
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  position: relative; z-index: 30; flex: none;
+  display: flex;
   padding: calc(8px + var(--safe-t)) 12px 8px 16px;
   min-height: 56px;
 }
 .wordmark {
-  display: flex; align-items: center; gap: 8px; color: var(--accent);
+  color: var(--accent);
   &__mark svg { width: 26px; height: 26px; }
   &__text {
-    display: flex; flex-direction: column; line-height: 0.82;
+    line-height: 0.82;
     b { @include display(17px, 900, 0.04em); color: var(--text); }
     span { @include display(17px, 600, 0.04em); color: var(--accent); }
   }
 }
-.topbar__right { display: flex; align-items: center; gap: 4px; }
-
 .balance {
-  display: flex; flex-direction: column; align-items: flex-end; padding: 4px 10px 4px 12px; margin-right: 4px;
+  padding: 4px 10px 4px 12px; margin-right: 4px;
   border-radius: 12px; background: var(--surface); border: 1px solid var(--line);
   &__label { @include label(9px); line-height: 1.2; }
   &__value { @include display(19px, 800, 0.02em); @include num; line-height: 1; color: var(--text); }

@@ -1,0 +1,46 @@
+// Bootstrap 5 for layout only: the grid (row / col / row-cols / gutters), flex, spacing, display, sizing and
+// position utilities, and the stack / truncate / visually-hidden helpers. No reboot, components or theme
+// colours: the look stays ours (_base and the other partials, compiled after this one so they win ties).
+//
+// Shared with the app's tokens: breakpoints (lg = widescreen desktop, xl = wide) and a 4px spacing scale
+// (1 = 4px, 2 = 8px, 3 = 12px, 4 = 16px, 5 = 20px, 6 = 24px; not Bootstrap's default rem steps).
+@use 'sass:map';
+@use 'tokens';
+
+@import 'bootstrap/scss/functions';
+
+// Utilities without !important: they lay things out, and the app's later, state- and media-specific
+// rules (e.g. hiding the top bar in the landscape race HUD) still override them.
+$enable-important-utilities: false;
+$grid-breakpoints: tokens.$breakpoints;
+$grid-gutter-width: 24px;
+$spacer: 4px;
+$spacers: (0: 0, 1: 4px, 2: 8px, 3: 12px, 4: 16px, 5: 20px, 6: 24px);
+
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/variables-dark';
+@import 'bootstrap/scss/maps';
+@import 'bootstrap/scss/mixins';
+@import 'bootstrap/scss/utilities';
+
+// Layout utilities only, plus min-h-0 / min-w-0 (flex children that must be allowed to shrink and scroll).
+$utilities: map.merge(
+  map-get-multiple($utilities, (
+    'display', 'overflow', 'overflow-y', 'position', 'width', 'height',
+    'flex', 'flex-direction', 'flex-grow', 'flex-shrink', 'flex-wrap',
+    'justify-content', 'align-items', 'align-content', 'align-self', 'order',
+    'margin', 'margin-x', 'margin-y', 'margin-top', 'margin-end', 'margin-bottom', 'margin-start',
+    'padding', 'padding-x', 'padding-y', 'padding-top', 'padding-end', 'padding-bottom', 'padding-start',
+    'gap', 'row-gap', 'column-gap', 'text-align',
+  )),
+  (
+    'min-height': (property: min-height, class: min-h, values: (0: 0)),
+    'min-width': (property: min-width, class: min-w, values: (0: 0)),
+  )
+);
+
+@import 'bootstrap/scss/grid';
+@import 'bootstrap/scss/helpers/stacks';
+@import 'bootstrap/scss/helpers/text-truncation';
+@import 'bootstrap/scss/helpers/visually-hidden';
+@import 'bootstrap/scss/utilities/api';

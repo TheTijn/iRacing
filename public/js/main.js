@@ -1,10 +1,11 @@
 // Boot + phase machine: BETTING → RACING → REVEAL → RESULT → (Rebet | Next race), per sport.
-import { state, sport, on, emit, $, $$ } from './state.js';
+import { state, sport, game, on, emit, $, $$ } from './state.js';
 import { CONFIG } from './data.js';
-import { SPORTS } from './sports.js';
+import { SPORTS, GAMES, GAME_ORDER, gameRaces } from './sports.js';
 import { settle, buildBet, BET_TYPES } from './pricing.js';
 import { loadStore, saveBalance, saveSettings, loadHistory, pushHistory, money, odds } from './store.js';
 import { buildField } from './field.js';
+import { withVirtualRunners } from './virtual.js';
 import { initRaceCard, renderHeader, renderRunners, resetForSport } from './racecard.js';
 import { initSlip, render as renderSlip, slipCost, describeSel, betTitle, closeSlip, addBet, newId } from './betslip.js';
 import * as race from './race.js';
@@ -15,35 +16,36 @@ import { gsap, reducedMotion } from './fx.js';
 
 const app = $('#app');
 const params = new URLSearchParams(location.search);
-const forcedRace = params.get('race');   // debug: ?race=190 / ?race=d01 plays that video every time
-const forcedSport = params.get('sport'); // debug: ?sport=horses opens on that sport
-const DEFAULT_SPORT = 'dogs';            // the app opens on greyhounds; horses are picked in the lobby
-const bags = {};                         // shuffle bag per sport
+const forcedRace = params.get('race');   // debug: ?race=190 / ?race=d01 plays that video every time (and opens its game)
+const forcedGame = params.get('game');   // debug: ?game=summerset opens that game
+const forcedSport = params.get('sport'); // debug: ?sport=horses opens that sport's first game
+const bags = {};                         // shuffle bag per game
 const lastRaceId = {};
 
 function pickRace() {
-  if (forcedRace) {
-    const r = state.races.find(x => x.id === forcedRace && x.sport === state.sport);
-    if (r) return r;
-  }
-  const bag = (bags[state.sport] ||= []);
+  const races = gameRaces(game(), state.races);
+  const forced = forcedRace && races.find(x => x.id === forcedRace);
+  if (forced) return forced;
+  const bag = (bags[state.game] ||= []);
   if (!bag.length) {
-    bag.push(...state.races.filter(r => r.sport === state.sport).sort(() => Math.random() - 0.5));
-    if (bag.length > 1 && bag[bag.length - 1].id === lastRaceId[state.sport]) bag.unshift(bag.pop());
+    bag.push(...races.slice().sort(() => Math.random() - 0.5));
+    if (bag.length > 1 && bag[bag.length - 1].id === lastRaceId[state.game]) bag.unshift(bag.pop());
   }
   const r = bag.pop();
-  lastRaceId[state.sport] = r.id;
+  lastRaceId[state.game] = r.id;
   return r;
 }
 
 function newRace({ keepField = false } = {}) {
   race.stop();
-  state.race = pickRace();
+  const video = pickRace();
+  const runners = Math.max(video.runners, game().runners || 0);   // more than the video shows → virtual runners
   state.raceNo++;
   const f = state.field;
-  if (!keepField || !f || f.sport !== state.sport || f.horses.length !== state.race.runners) {
-    state.field = buildField(state.race.runners, Math.random, state.sport);
+  if (!keepField || !f || f.game !== state.game || f.horses.length !== runners) {
+    state.field = { ...buildField(runners, Math.random, state.sport), game: state.game };
   }
+  state.race = withVirtualRunners(video, state.field);
   state.legs = [[], [], []];
   state.placed = [];
   state.outcome = null;
@@ -90,7 +92,7 @@ function onRaceFinish(order, { natural = false } = {}) {
   saveBalance();
 
   pushHistory({
-    raceNo: state.raceNo, sport: state.sport, at: Date.now(), podium: order.slice(0, 3), staked, returned,
+    raceNo: state.raceNo, sport: state.sport, venue: state.race.venue, at: Date.now(), podium: order.slice(0, 3), staked, returned,
     bets: bets.map(b => ({ id: b.id, title: betTitle(b), sel: describeSel(b), stake: b.stake * b.combos.length, ret: b.ret })),
   });
 
@@ -156,10 +158,10 @@ replayVideo.addEventListener('timeupdate', () => {
 });
 $('#btnReplayClose').addEventListener('click', closeReplay);
 replayEl.addEventListener('click', e => { if (e.target === replayEl) closeReplay(); });
-on('escape', () => { closeReplay(); if (state.phase === 'lobby') pickGame(state.sport); });
+on('escape', () => { closeReplay(); if (state.phase === 'lobby') pickGame(state.game); });
 
-// ---------- Sport ----------
-// The lobby (the wordmark's stripes) switches sport; ?sport= / ?race= / __ir.setSport() for QA.
+// ---------- Game ----------
+// The lobby (the wordmark's stripes) switches game; ?game= / ?sport= / ?race= / __ir.setGame() for QA.
 /** Wordmark + page title: 'Instant Games' in the lobby, else the sport being played. */
 function renderBrand() {
   const brand = state.phase === 'lobby' ? 'Games' : sport().brand;
@@ -176,17 +178,18 @@ function applySport() {
   $('#replayTag').textContent = s.replayTag;
 }
 
-/** Switch sport between races: new field from that sport's videos. Same wallet and history. */
-function setSport(key) {
-  if (key === state.sport || !SPORTS[key] || !['lobby', 'betting', 'result'].includes(state.phase)) return;
-  if (!state.races.some(r => r.sport === key)) { toast(`No ${SPORTS[key].name.toLowerCase()} races available`, true); return; }
+/** Switch game between races: new field from that game's videos. Same wallet and history. */
+function setGame(key) {
+  if (key === state.game || !GAMES[key] || !['lobby', 'betting', 'result'].includes(state.phase)) return;
+  if (!gameRaces(GAMES[key], state.races).length) { toast(`No ${GAMES[key].venue} races available`, true); return; }
   const hadBets = state.slip.length > 0;
   cancelCelebration();
   closeReplay();
   closeSlip();
-  state.sport = key;
+  state.game = key;
+  state.sport = GAMES[key].sport;
   state.slip = [];
-  state.lastPlaced = [];    // picks belong to the other sport's field
+  state.lastPlaced = [];    // picks belong to the other game's field
   applySport();
   resetForSport();
   newRace();
@@ -200,7 +203,7 @@ function setSport(key) {
 // (slip intact), or a fresh race when the lobby was opened from the result screen.
 let lobbyFrom = 'betting';
 function openLobby() {
-  if (state.phase === 'lobby') { pickGame(state.sport); return; }
+  if (state.phase === 'lobby') { pickGame(state.game); return; }
   if (!['betting', 'result'].includes(state.phase)) { toast('The lobby opens after this race'); return; }
   if (state.phase === 'result' && !resultReady()) return;
   lobbyFrom = state.phase;
@@ -213,7 +216,7 @@ function openLobby() {
 }
 function pickGame(key) {
   if (state.phase !== 'lobby') return;
-  if (key !== state.sport) setSport(key);
+  if (key !== state.game) setGame(key);
   else if (lobbyFrom === 'result') nextRace();
   else showView('betting');
 }
@@ -262,7 +265,7 @@ function renderHistory() {
   const el = $('#historyList');
   if (!list.length) { el.innerHTML = '<li class="history__empty">No settled bets yet this session.</li>'; return; }
   el.innerHTML = list.map(h => `
-    <li class="history__race"><span>Race ${h.raceNo}${h.sport ? ` · ${SPORTS[h.sport]?.name || ''}` : ''} · ${new Date(h.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+    <li class="history__race"><span>Race ${h.raceNo}${h.venue ? ` · ${h.venue}` : h.sport ? ` · ${SPORTS[h.sport]?.name || ''}` : ''} · ${new Date(h.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
       <span>1-2-3: ${h.podium.join('-')}</span></li>
     ${h.bets.map(b => `<li class="rbet ${b.ret > 0 ? 'is-won' : 'is-lost'}">
       <span class="rbet__type">${b.title}<em>${b.id}</em></span>
@@ -281,9 +284,17 @@ async function init() {
     toast('Could not load races — please refresh', true);
     throw e;
   }
+  const playable = k => GAMES[k] && gameRaces(GAMES[k], state.races).length > 0;
   const forced = forcedRace && state.races.find(r => r.id === forcedRace);
-  const want = [forced?.sport, forcedSport, DEFAULT_SPORT].find(k => SPORTS[k] && state.races.some(r => r.sport === k));
-  state.sport = want || state.races[0].sport;
+  const want = [
+    forced && GAME_ORDER.find(k => gameRaces(GAMES[k], [forced]).length),
+    forcedGame,
+    forcedSport && GAME_ORDER.find(k => GAMES[k].sport === forcedSport),
+    ...GAME_ORDER,
+  ].find(playable);
+  if (!want) { toast('No races available', true); return; }
+  state.game = want;
+  state.sport = GAMES[want].sport;
   applySport();
   initSheets();
   initSlip();
@@ -316,4 +327,5 @@ async function init() {
 init();
 
 // Debug handle for QA in the console
-window.__ir = { state, settle, buildBet, BET_TYPES, addBet, odds, setSport };
+const setSport = key => setGame(GAME_ORDER.find(k => GAMES[k].sport === key));
+window.__ir = { state, settle, buildBet, BET_TYPES, addBet, odds, setGame, setSport };

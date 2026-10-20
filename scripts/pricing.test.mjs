@@ -5,8 +5,13 @@ import { readFileSync } from 'node:fs';
 import {
   expandCombos, pickError, buildBet, settle, betCost, maxReturn, liveState, winProbs,
   comboProbability, exoticPrice, formatOdds, toAmerican, toFractional, placesFor, EXOTICS,
+  h2hPairs, aheadProb, winnerSets, MATCH_BOOK, SET_SIDES, round2,
 } from '../public/js/pricing.js';
-import { SPORTS } from '../public/js/sports.js';
+import { SPORTS, GAMES, gameRaces } from '../public/js/sports.js';
+import { buildField } from '../public/js/field.js';
+import { withVirtualRunners, sampleFinish, mergeOrder } from '../public/js/virtual.js';
+
+const mulberry = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const PROFILES = SPORTS.horses.profiles;
 
 const horses = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -77,6 +82,17 @@ test('settlement against video 190 podium 1-2-6', () => {
   assert.equal(settle(sw, podium), p16);
   const sw3 = bet('SWINGER', [[1, 2, 6]]);          // all three pairs win
   assert.equal(settle(sw3, podium), Math.round(sw3.combos.reduce((s, c) => s + c.price, 0) * 100) / 100);
+});
+
+test('every game has races; dog games are one venue each', () => {
+  for (const g of Object.values(GAMES)) {
+    const rs = gameRaces(g, races);
+    assert.ok(rs.length, `${g.key}: no races`);
+    if (g.runners) assert.ok(rs.every(r => r.runners <= g.runners), `${g.key}: video field larger than the game`);
+  }
+  assert.deepEqual(gameRaces(GAMES.crawford, races).map(r => r.id), ['d01']);
+  assert.deepEqual(gameRaces(GAMES.summerset, races).map(r => r.id), ['d02']);
+  assert.ok(SPORTS.dogs.colours[7] && SPORTS.dogs.colours[8], 'trap jackets for 7 and 8');
 });
 
 test('greyhound results match the finish shown in the videos', () => {
@@ -176,4 +192,91 @@ test('six-runner (greyhound) Place pays the top 2 only', () => {
   const rf = buildBet('EXACTA', [[1, 4]], { stake: 1, box: true, field });
   assert.equal(rf.combos.length, 2);
   assert.ok(settle(rf, order, places) > 0);
+});
+
+// ---------- Head to Head tab ----------
+test('head to head: matchups, prices and settlement', () => {
+  assert.deepEqual(h2hPairs(field), [[1, 2], [2, 3], [3, 4]]);   // F1 v F2, F2 v F3, F3 v F4
+  const p = winProbs(field.win);
+  for (const [a, b] of h2hPairs(field)) {
+    assert.ok(Math.abs(aheadProb(a, b, p) + aheadProb(b, a, p) - 1) < 1e-12);
+    const book = 1 / bet('H2H', [[a], [b]]).combos[0].price + 1 / bet('H2H', [[b], [a]]).combos[0].price;
+    assert.ok(Math.abs(book - MATCH_BOOK) < 0.01, `${a} v ${b}: book ${book}`);
+    assert.ok(bet('H2H', [[a], [b]]).combos[0].price < bet('H2H', [[b], [a]]).combos[0].price, 'favourite is shorter');
+  }
+  const order = [5, 3, 1, 9, 2, 4, 6, 7, 8, 10];
+  assert.ok(settle(bet('H2H', [[1], [2]], false, 10), order) > 10);   // 1 is 3rd, 2 is 5th
+  assert.equal(settle(bet('H2H', [[2], [1]]), order), 0);
+  assert.ok(settle(bet('H2H', [[2], [4]]), order) > 0, 'both outside the podium');
+  // A partial order: the runner missing from it finished behind
+  assert.ok(settle(bet('H2H', [[1], [2]]), [5, 3, 1]) > 0);
+  assert.equal(settle(bet('H2H', [[2], [4]]), [5, 3, 1]), 0);
+});
+
+test('odd/even and high/low on the winning number', () => {
+  assert.deepEqual(winnerSets([1, 2, 3, 4, 5, 6]), { Odd: [1, 3, 5], Even: [2, 4, 6], Low: [1, 2, 3], High: [4, 5, 6] });
+  assert.deepEqual(winnerSets([1, 2, 3, 4, 5, 6, 7, 8]).High, [5, 6, 7, 8]);
+  for (const [type, [x, y]] of Object.entries(SET_SIDES)) {
+    const bx = buildBet(type, [], { stake: 1, field, side: x });
+    const by = buildBet(type, [], { stake: 1, field, side: y });
+    assert.equal(bx.side, x);
+    assert.ok(Math.abs(1 / bx.combos[0].price + 1 / by.combos[0].price - MATCH_BOOK) < 0.01, type);
+    assert.deepEqual([...bx.legs[0], ...by.legs[0]].sort((a, b) => a - b), horses, `${type} covers the field once`);
+  }
+  const odd = buildBet('ODDEVEN', [], { stake: 10, field, side: 'Odd' });
+  assert.equal(settle(odd, [3, 2, 1]), round2(10 * odd.combos[0].price));
+  assert.equal(settle(odd, [4, 3, 1]), 0);
+  const high = buildBet('HILO', [], { stake: 1, field, side: 'High' });
+  assert.ok(settle(high, [6, 1, 2]) > 0);
+  assert.equal(settle(high, [5, 6, 7]), 0);   // 1–5 is Low in a ten-runner field
+  assert.equal(liveState(odd, [2, 1, 4, 3, 5, 6, 7, 8, 9, 10]), 'close');
+});
+
+test('max return with head to head bets is exact', () => {
+  const a = bet('H2H', [[1], [2]], false, 10), b = bet('H2H', [[2], [1]], false, 10);
+  assert.equal(maxReturn([a, b], horses), Math.max(settle(a, [1, 2]), settle(b, [2, 1])), 'opposite sides never both pay');
+  const c = bet('H2H', [[3], [4]], false, 10);
+  assert.equal(maxReturn([a, c], horses), round2(settle(a, [1, 2]) + settle(c, [3, 4])));
+  // Win on 2 + H2H 1 over 2 can't both land
+  const w2 = bet('WIN', [[2]], false, 10);
+  assert.equal(maxReturn([w2, a], horses), Math.max(settle(w2, [2]), settle(a, [1, 2])));
+  // Head to head is decided behind the podium too: 9 wins, and 1 can still beat 2 in 4th/5th
+  const w9 = bet('WIN', [[9]], false, 10);
+  assert.equal(maxReturn([w9, a], horses), round2(settle(w9, [9]) + settle(a, [1, 2])));
+  assert.equal(liveState(a, [5, 6, 7, 8, 2, 1, 3, 4, 9, 10]), 'close', 'one overtake anywhere in the field');
+});
+
+// ---------- Virtual runners (Summerset Park: 8 dogs on 6-dog footage) ----------
+test('virtual runners join the video race coherently', () => {
+  const base = races.find(r => r.id === 'd02');
+  for (let seed = 1; seed <= 300; seed++) {
+    const f = buildField(8, mulberry(seed), 'dogs');
+    const r = withVirtualRunners(base, f, mulberry(seed * 7919));
+    assert.equal(r.runners, 8);
+    assert.deepEqual(r.virtual, [7, 8]);
+    assert.deepEqual([...r.result].sort(), [1, 2, 3, 4, 5, 6, 7, 8]);
+    assert.deepEqual(r.result.filter(h => h <= 6), base.result, `seed ${seed}: video dogs keep their finish order`);
+    assert.deepEqual(r.orderEvents.at(-1).order, r.result, `seed ${seed}: last running order is the result`);
+    assert.ok(r.orderEvents.at(-1).f <= r.finishFrame);
+    for (const e of r.orderEvents) assert.equal(new Set(e.order).size, 8, `seed ${seed} @${e.f}: duplicate runner`);
+    assert.ok(r.orderEvents.every((e, i, a) => i === 0 || a[i - 1].f < e.f), 'events in frame order');
+  }
+  const six = buildField(6, mulberry(1), 'dogs');
+  assert.equal(withVirtualRunners(base, six), base, 'six-dog fields use the video as is');
+  assert.deepEqual(mergeOrder([4, 1, 6, 2, 5, 3], { 7: 0, 8: 5 }), [7, 4, 1, 6, 2, 8, 5, 3]);
+});
+
+test('virtual runners finish where their price says (Harville)', () => {
+  const f = buildField(8, mulberry(42), 'dogs');
+  const p = winProbs(f.win);
+  const rnd = mulberry(99);
+  const N = 20000;
+  let wins7 = 0, wins8 = 0;
+  for (let i = 0; i < N; i++) {
+    const order = sampleFinish(f.horses, p, rnd);
+    if (order[0] === 7) wins7++;
+    if (order[0] === 8) wins8++;
+  }
+  assert.ok(Math.abs(wins7 / N - p[7]) < 0.01, `trap 7 wins ${wins7 / N} vs ${p[7]}`);
+  assert.ok(Math.abs(wins8 / N - p[8]) < 0.01, `trap 8 wins ${wins8 / N} vs ${p[8]}`);
 });

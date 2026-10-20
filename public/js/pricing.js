@@ -2,6 +2,7 @@
 //
 // Every bet is normalised to the same shape so one settle() covers all markets:
 //   { type, stake, box, legs: [[horse...], ...], combos: [{ sel: [horse...], price }] }
+// (+ `side` on Odd/Even and High/Low bets: which half of the field the winner must come from).
 // `stake` is per combination; ticket cost = stake × combos.length.
 
 export const BET_TYPES = {
@@ -12,9 +13,16 @@ export const BET_TYPES = {
   QUINELLA: { label: 'Quinella', ordered: false, size: 2, cap: 250 },
   TRIO:     { label: 'Trio',     ordered: false, size: 3, cap: 1000 },
   SWINGER:  { label: 'Swinger',  ordered: false, size: 2, cap: 150 },
+  // Head to Head tab. H2H: sel [a, b] = a finishes ahead of b. ODDEVEN / HILO: sel = the set of numbers the
+  // winner must come from (bet.side names it: Odd, Even, High, Low).
+  H2H:      { label: 'Head to Head', ordered: true,  size: 2, cap: Infinity, pair: true },
+  ODDEVEN:  { label: 'Odd/Even',     ordered: false, size: 1, cap: Infinity, set: true },
+  HILO:     { label: 'High/Low',     ordered: false, size: 1, cap: Infinity, set: true },
 };
 export const EXOTICS = ['EXACTA', 'TRIFECTA', 'QUINELLA', 'TRIO', 'SWINGER'];
 export const EXOTIC_MARGIN = 0.2;
+export const MATCH_BOOK = 1.11;   // two-way markets (head to head, odd/even, high/low): ~11% book, as on the reference card
+export const SET_SIDES = { ODDEVEN: ['Odd', 'Even'], HILO: ['High', 'Low'] };
 
 export const round2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
 
@@ -62,6 +70,25 @@ export function comboProbability(type, sel, p, allHorses) {
     }
     default: throw new Error(`No exotic probability for ${type}`);
   }
+}
+
+/** P(a finishes ahead of b). Exact under Harville (Plackett–Luce): only the two runners' strengths matter. */
+export const aheadProb = (a, b, p) => p[a] / (p[a] + p[b]);
+
+/** Decimal price for a two-way market outcome of probability `prob`. */
+export const matchPrice = prob => round2(Math.max(1.01, 1 / (prob * MATCH_BOOK)));
+
+/** Runner numbers per winner market: Odd / Even, and Low (bottom half) / High (top half) of the field. */
+export function winnerSets(horses) {
+  const nos = horses.slice().sort((a, b) => a - b);
+  const half = Math.floor(nos.length / 2);
+  return { Odd: nos.filter(h => h % 2), Even: nos.filter(h => !(h % 2)), Low: nos.slice(0, half), High: nos.slice(half) };
+}
+
+/** Head to head matchups: favourite v 2nd favourite, 2nd v 3rd, 3rd v 4th (F1 v F2, F2 v F3, F3 v F4). */
+export function h2hPairs(field, count = 3) {
+  const ranked = field.byOdds || field.horses.slice().sort((a, b) => field.win[a] - field.win[b] || a - b);
+  return ranked.slice(0, count + 1).map((h, i, a) => [h, a[i + 1]]).slice(0, Math.min(count, ranked.length - 1));
 }
 
 /** Fixed decimal price for one exotic combination. */
@@ -122,9 +149,18 @@ export function pickError(type, legs, box = false, noun = 'horse') {
  * Build a normalised bet.
  * field: { horses: [no...], win: {no: odds}, place: {no: odds} }
  */
-export function buildBet(type, legs, { stake, box = false, field }) {
+export function buildBet(type, legs, { stake, box = false, field, side }) {
   let combos;
-  if (type === 'WIN' || type === 'PLACE') {
+  if (BET_TYPES[type].set) {
+    const sel = winnerSets(field.horses)[side];
+    const p = winProbs(field.win);
+    combos = [{ sel, price: matchPrice(sel.reduce((s, h) => s + p[h], 0)) }];
+    return { type, stake, box: false, side, legs: [sel.slice()], combos };
+  }
+  if (type === 'H2H') {
+    const sel = [legs[0][0], legs[1][0]];
+    combos = [{ sel, price: matchPrice(aheadProb(sel[0], sel[1], winProbs(field.win))) }];
+  } else if (type === 'WIN' || type === 'PLACE') {
     const h = legs[0][0];
     combos = [{ sel: [h], price: (type === 'WIN' ? field.win : field.place)[h] }];
   } else {
@@ -140,6 +176,12 @@ export const betCost = bet => round2(bet.stake * bet.combos.length);
 export function comboWins(type, sel, podium, places = 3) {
   const top = n => podium.slice(0, n);
   switch (type) {
+    case 'H2H': {   // a runner missing from a partial order finished behind everyone listed
+      const ia = podium.findIndex(h => h == sel[0]), ib = podium.findIndex(h => h == sel[1]);
+      return ia >= 0 && (ib < 0 || ia < ib);
+    }
+    case 'ODDEVEN':
+    case 'HILO': return sel.some(h => h == podium[0]);
     case 'WIN': return podium[0] == sel[0];
     case 'PLACE': return top(places).some(h => h == sel[0]);
     case 'EXACTA': return podium[0] == sel[0] && podium[1] == sel[1];
@@ -163,11 +205,17 @@ export const winningCombos = (bet, podium, places = 3) =>
   bet.combos.filter(c => comboWins(bet.type, c.sel, podium, places));
 
 /**
- * Exact best-case return of a whole slip: max over every possible 1-2-3 of the sum of all bets.
+ * Exact best-case return of a whole slip: max over every possible finish of the sum of all bets.
  * Honest — two Win bets on different horses can never both pay.
+ * Every market but Head to Head depends only on the 1-2-3, so it enumerates podiums; head to head bets
+ * also depend on the order behind the podium, so for each podium it tries every order of the other
+ * runners they name (at most a handful: matchups only use the four favourites).
  */
 export function maxReturn(bets, horses, places = 3) {
   if (!bets.length) return 0;
+  const pairBets = bets.filter(b => BET_TYPES[b.type].pair);
+  const podiumBets = bets.filter(b => !BET_TYPES[b.type].pair);
+  const pairRunners = [...new Set(pairBets.flatMap(b => b.combos.flatMap(c => c.sel)))];
   let best = 0;
   const podium = [0, 0, 0];
   for (const a of horses) for (const b of horses) {
@@ -176,7 +224,17 @@ export function maxReturn(bets, horses, places = 3) {
       if (c == a || c == b) continue;
       podium[0] = a; podium[1] = b; podium[2] = c;
       let sum = 0;
-      for (const bet of bets) sum += settle(bet, podium, places);
+      for (const bet of podiumBets) sum += settle(bet, podium, places);
+      if (pairBets.length) {
+        let bestPairs = 0;
+        for (const rest of permutations(pairRunners.filter(h => !podium.some(x => x == h)))) {
+          const order = [...podium, ...rest];
+          let s = 0;
+          for (const bet of pairBets) s += settle(bet, order, places);
+          if (s > bestPairs) bestPairs = s;
+        }
+        sum += bestPairs;
+      }
       if (sum > best) best = sum;
     }
   }
@@ -194,7 +252,8 @@ export const betMaxReturn = (bet, horses, places = 3) => maxReturn([bet], horses
  */
 export function liveState(bet, order, places = 3) {
   if (settle(bet, order, places) > 0) return 'winning';
-  const depth = Math.min(order.length - 1, places + 1);
+  // Head to head runners can be anywhere in the field, so any single overtake counts.
+  const depth = BET_TYPES[bet.type].pair ? order.length - 1 : Math.min(order.length - 1, places + 1);
   for (let i = 0; i < depth; i++) {
     const o = order.slice();
     [o[i], o[i + 1]] = [o[i + 1], o[i]];

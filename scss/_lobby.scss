@@ -3,16 +3,16 @@
 // Lobby: one thumbnail tile per game, opened from the wordmark's stripes.
 .view--lobby { background: var(--bg); }
 .lobby {
-  flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px;
+  flex: 1; min-height: 0;
   padding: 4px 12px calc(16px + var(--safe-b)); overflow-y: auto; scrollbar-width: none;
   &__head { padding: 4px 4px 0; }
   &__title { @include display(34px, 900, 0.02em); margin-top: 8px; }
-  &__grid { flex: 1; display: grid; grid-auto-rows: minmax(190px, 1fr); gap: 12px; }
+  // Bootstrap row: one tile per line on phones (lines stretch to fill the height), three across from lg.
+  &__grid > * { min-height: 190px; }
 }
 
 .game {
-  position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
-  padding: 18px; border-radius: var(--r-lg); overflow: hidden; isolation: isolate; text-align: left;
+  position: relative; padding: 18px; border-radius: var(--r-lg); overflow: hidden; isolation: isolate; text-align: left;
   border: 1px solid var(--line-2);
   @include press(0.98);
 
@@ -27,26 +27,24 @@
     }
   }
   &__badge {
-    position: absolute; top: 14px; left: 14px; display: flex; align-items: center; gap: 7px;
-    padding: 6px 10px; border-radius: 99px; @include label(10px); color: var(--text);
+    position: absolute; top: 14px; right: 14px; padding: 6px 10px; border-radius: 99px; @include label(10px); color: var(--text);
     background: rgba(5, 13, 9, 0.7); border: 1px solid var(--line-2);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px rgba(63, 229, 140, 0.2); }
   }
-  &__body { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }
   &__icon {
     width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px;
     background: var(--accent); color: var(--accent-ink);
     svg { width: 24px; height: 24px; }
   }
   &__name {
-    display: flex; flex-direction: column; gap: 6px;
+    gap: 6px;
     b { @include display(40px, 900, 0.02em); color: var(--text); line-height: 0.88; }
     span { @include display(19px, 700, 0.05em); color: var(--accent); }
   }
   &__meta { @include label(11px); color: var(--text-2); }
   &__cta {
-    flex: none; display: flex; align-items: center; gap: 4px; height: 40px; padding: 0 12px 0 16px;
+    gap: 4px; height: 40px; padding: 0 12px 0 16px;
     border-radius: 99px; background: var(--accent); color: var(--accent-ink); font-weight: 650; font-size: 14px;
     box-shadow: 0 8px 24px -8px var(--accent-glow);
     svg { width: 18px; height: 18px; transform: rotate(90deg); }

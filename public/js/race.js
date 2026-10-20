@@ -1,7 +1,7 @@
 // Live race: plays the video, maps media time → telemetry frame, drives the distance rail, running
 // order strip, live bet states and lead-change callouts.
 import { state, emit, on, $, $$ } from './state.js';
-import { liveState, settle } from './pricing.js';
+import { liveState, settle, BET_TYPES } from './pricing.js';
 import { money, ordinal, odds } from './store.js';
 import { runnerIcon, saddle } from './silks.js';
 import { betTitle } from './betslip.js';
@@ -75,9 +75,12 @@ function horseLive(h, order) {
 function buildLiveBets(order) {
   liveList.innerHTML = state.placed.map(b => {
     const horses = [...new Set(b.legs.flat())];
-    const sel = b.combos.length === 1 && b.type !== 'WIN' && b.type !== 'PLACE'
-      ? b.combos[0].sel.map(h => horseLive(h, order)).join('<span class="sep">→</span>')
-      : horses.map(h => horseLive(h, order)).join('');
+    const t = BET_TYPES[b.type];
+    const sel = t.set ? `<span class="sel-side">${b.side}</span>${horses.map(h => horseLive(h, order)).join('')}`
+      : t.pair ? b.combos[0].sel.map(h => horseLive(h, order)).join('<span class="sep">ahead of</span>')
+      : b.combos.length === 1 && b.type !== 'WIN' && b.type !== 'PLACE'
+        ? b.combos[0].sel.map(h => horseLive(h, order)).join('<span class="sep">→</span>')
+        : horses.map(h => horseLive(h, order)).join('');
     const nm = b.legs.flat().length === 1 ? ` · ${state.field.runners[b.legs[0][0]].name}` : '';
     return `<li class="lbet is-out" data-id="${b.id}">
       <span class="lbet__type">${betTitle(b)}${nm}</span>

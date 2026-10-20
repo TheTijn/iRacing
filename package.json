@@ -5,8 +5,8 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "sass": "sass --no-source-map --style=compressed scss/style.scss public/css/style.css",
-    "sass:watch": "sass --watch scss/style.scss public/css/style.css",
+    "sass": "sass --no-source-map --style=compressed --load-path=node_modules --quiet-deps --silence-deprecation=import scss/style.scss public/css/style.css",
+    "sass:watch": "sass --watch --load-path=node_modules --quiet-deps --silence-deprecation=import scss/style.scss public/css/style.css",
     "races": "node scripts/build-races.mjs",
     "telemetry:dogs": "node scripts/derive-dog-telemetry.mjs",
     "transcode": "bash scripts/transcode.sh",
@@ -15,6 +15,7 @@
     "dev": "concurrently \"npm run sass:watch\" \"node --watch server.js\""
   },
   "dependencies": {
+    "bootstrap": "^5.3.8",
     "express": "^4.21.0",
     "sass": "^1.99.0"
   },

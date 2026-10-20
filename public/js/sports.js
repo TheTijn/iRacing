@@ -49,7 +49,8 @@ const SILKS = {
   10: { body: '#18181B', sleeves: '#18181B', cap: '#F4F4F2', pattern: 'plain' },
 };
 
-// Trap jackets, matching the chips in the Kiron greyhound videos (standard trap colours).
+// Trap jackets, matching the chips in the Kiron greyhound videos (standard trap colours). Traps 7 and 8
+// only run in eight-dog games (virtual runners, see virtual.js): green, and yellow/black hoops.
 const TRAPS = {
   1: { body: '#C0272F', ink: '#FFFFFF' },
   2: { body: '#2F48B5', ink: '#FFFFFF' },
@@ -57,12 +58,14 @@ const TRAPS = {
   4: { body: '#17171A', ink: '#FFFFFF' },
   5: { body: '#E8C21E', ink: '#141414' },
   6: { body: '#17171A', alt: '#F4F4F2', ink: '#D9262E', pattern: 'hoops' },
+  7: { body: '#1F8A4C', ink: '#FFFFFF' },
+  8: { body: '#E8C21E', alt: '#17171A', ink: '#D9262E', pattern: 'hoops' },
 };
 
 export const SPORTS = {
   horses: {
     key: 'horses', name: 'Horses', title: 'Horse racing', brand: 'Horse Racing',
-    noun: 'horse', nouns: 'horses', icon: 'silk',
+    noun: 'horse', nouns: 'horses', icon: 'silk', number: 'number',
     surface: 'Turf', profiles: HORSE_PROFILES, colours: SILKS,
     exotics: EXOTICS,
     labels: {},
@@ -72,7 +75,7 @@ export const SPORTS = {
   },
   dogs: {
     key: 'dogs', name: 'Dogs', title: 'Greyhound racing', brand: 'Greyhounds',
-    noun: 'dog', nouns: 'dogs', icon: 'trap',
+    noun: 'dog', nouns: 'dogs', icon: 'trap', number: 'trap',
     surface: 'Sand', profiles: DOG_PROFILES, colours: TRAPS,
     // UK greyhound markets: Forecast / Tricast, boxed as Reverse Forecast / Combination Tricast.
     // Quinella is left out because Reverse Forecast covers "1st & 2nd in any order".
@@ -87,6 +90,18 @@ export const SPORTS = {
   },
 };
 export const SPORT_KEYS = Object.keys(SPORTS);
+
+// Games in the lobby. A game is one venue of a sport: its races are the videos with that venue. `runners`
+// sets the field size; when it is bigger than the video's field the extra runners are virtual (virtual.js).
+export const GAMES = {
+  crawford:  { key: 'crawford',  sport: 'dogs',   venue: 'Crawford Park',  runners: 6 },
+  summerset: { key: 'summerset', sport: 'dogs',   venue: 'Summerset Park', runners: 8 },
+  milnerton: { key: 'milnerton', sport: 'horses', venue: 'Milnerton' },
+};
+export const GAME_ORDER = ['crawford', 'summerset', 'milnerton'];   // lobby order; the first is the default
+
+/** Videos a game plays. */
+export const gameRaces = (game, races) => races.filter(r => r.sport === game.sport && r.venue === game.venue);
 
 /** Market name, e.g. 'Exacta box' (horses) or 'Reverse Forecast' (dogs). */
 export function betLabel(sport, type, box = false) {
@@ -110,6 +125,8 @@ export function betHint(sport, type, { box = false, places = 3 } = {}) {
     case 'QUINELLA': return '1st & 2nd in any order';
     case 'TRIO': return 'Top 3 in any order';
     case 'SWINGER': return `2 ${nouns} both in the top 3`;
+    case 'H2H': return `Which ${noun} finishes ahead?`;
+    case 'ODDEVEN': case 'HILO': return `Winning ${SPORTS[sport].number} number`;
     default: return '';
   }
 }
