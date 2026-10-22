@@ -91,17 +91,27 @@ test('every game has races; dog games are one venue each', () => {
     if (g.runners) assert.ok(rs.every(r => r.runners <= g.runners), `${g.key}: video field larger than the game`);
   }
   assert.deepEqual(gameRaces(GAMES.crawford, races).map(r => r.id), ['d01']);
-  assert.deepEqual(gameRaces(GAMES.summerset, races).map(r => r.id), ['d02']);
+  assert.deepEqual(gameRaces(GAMES.summerset, races).map(r => r.id), ['d02', 's123', 's124', 's125', 's126']);
   assert.ok(SPORTS.dogs.colours[7] && SPORTS.dogs.colours[8], 'trap jackets for 7 and 8');
 });
 
 test('greyhound results match the finish shown in the videos', () => {
   assert.deepEqual(races.find(r => r.id === 'd01').result, [2, 3, 4, 6, 1, 5]);
   assert.deepEqual(races.find(r => r.id === 'd02').result, [4, 1, 6, 2, 5, 3]);
-  for (const r of races.filter(x => x.sport === 'dogs')) {
+  for (const r of races.filter(x => /^d\d/.test(x.id))) {
     assert.equal(r.runners, 6);
     assert.equal(r.distance, 720);
     assert.ok(r.replayStart > r.finishFrame && r.replayEnd > r.replayStart, `${r.id}: replay window`);
+  }
+  // Summerset Park 8-dog footage (360m, no replay). The file names are not the finish order (1-2-4 finishes 1-2-3).
+  assert.deepEqual(races.find(r => r.id === 's123').result, [1, 2, 3, 6, 5, 4, 8, 7]);
+  assert.deepEqual(races.find(r => r.id === 's124').result, [1, 2, 3, 4, 6, 5, 7, 8]);
+  assert.deepEqual(races.find(r => r.id === 's125').result, [1, 5, 3, 6, 2, 7, 4, 8]);
+  assert.deepEqual(races.find(r => r.id === 's126').result, [1, 6, 3, 2, 5, 7, 4, 8]);
+  for (const r of races.filter(x => /^s\d/.test(x.id))) {
+    assert.equal(r.runners, 8);
+    assert.equal(r.distance, 360);
+    assert.equal(r.replayStart, null);
   }
 });
 

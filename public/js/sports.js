@@ -50,7 +50,7 @@ const SILKS = {
 };
 
 // Trap jackets, matching the chips in the Kiron greyhound videos (standard trap colours). Traps 7 and 8
-// only run in eight-dog games (virtual runners, see virtual.js): green, and yellow/black hoops.
+// (eight-dog games) match the Summerset Park trap box: black/red quarters, and green.
 const TRAPS = {
   1: { body: '#C0272F', ink: '#FFFFFF' },
   2: { body: '#2F48B5', ink: '#FFFFFF' },
@@ -58,8 +58,8 @@ const TRAPS = {
   4: { body: '#17171A', ink: '#FFFFFF' },
   5: { body: '#E8C21E', ink: '#141414' },
   6: { body: '#17171A', alt: '#F4F4F2', ink: '#D9262E', pattern: 'hoops' },
-  7: { body: '#1F8A4C', ink: '#FFFFFF' },
-  8: { body: '#E8C21E', alt: '#17171A', ink: '#D9262E', pattern: 'hoops' },
+  7: { body: '#17171A', alt: '#D9262E', ink: '#FFFFFF', pattern: 'quarters' },
+  8: { body: '#3FC93C', ink: '#141414' },
 };
 
 export const SPORTS = {
@@ -98,7 +98,7 @@ export const GAMES = {
   summerset: { key: 'summerset', sport: 'dogs',   venue: 'Summerset Park', runners: 8 },
   milnerton: { key: 'milnerton', sport: 'horses', venue: 'Milnerton' },
 };
-export const GAME_ORDER = ['crawford', 'summerset', 'milnerton'];   // lobby order; the first is the default
+export const GAME_ORDER = ['summerset', 'crawford', 'milnerton'];   // lobby order; the first is the default
 
 /** Videos a game plays. */
 export const gameRaces = (game, races) => races.filter(r => r.sport === game.sport && r.venue === game.venue);

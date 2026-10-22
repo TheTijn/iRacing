@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Instant Racing: a mobile-first instant **greyhound** racing betting game (play money), with a widescreen desktop layout. It is one engine with per-sport config in `public/js/sports.js`. The **lobby** (tap the wordmark's two stripes) offers three **games** (`GAMES` in `sports.js`): **Crawford Park** (6 dogs, the default), **Summerset Park** (8 dogs: the 6-dog video plus 2 virtual runners) and **Milnerton** (horses). Sibling of iHockey, and it uses the same deploy model: an Express static server, SCSS, and vanilla ES modules with no bundler.
+Instant Racing: a mobile-first instant **greyhound** racing betting game (play money), with a widescreen desktop layout. It is one engine with per-sport config in `public/js/sports.js`. The **lobby** (tap the wordmark's two stripes) offers three **games** (`GAMES` in `sports.js`): **Summerset Park** (8 dogs, the default: four 8-dog videos plus a 6-dog video with 2 virtual runners), **Crawford Park** (6 dogs) and **Milnerton** (horses). Sibling of iHockey, and it uses the same deploy model: an Express static server, SCSS, and vanilla ES modules with no bundler.
 
 ## Commands
 
@@ -31,8 +31,9 @@ Debug: `?race=190` / `?race=d01` forces a specific video every race (and opens i
 - They ship **without telemetry**. `scripts/derive-dog-telemetry.mjs` reads the burned-in order bar (6 trap chips at fixed pixel slots, classified by colour) on every frame, debounces chip-slide flicker, and writes a `.txt` in the horse format (at 30 fps, with `# venue=` / `# fps=` headers).
 - Per-video `<name>.keys.json` holds the hand-checked parts: `jumpFrame`, `finishFrame` (read off the line cam), `replayStart`/`replayEnd`, `result`, distance keyframes (the HUD distance is linear, so `[[jump,720],[finish,0]]`), and `overrides` for frames the classifier can't see (e.g. a pass on the last frames before the bar fades). The script asserts the last bar read equals `result`.
 - Adding a dog video: drop the mp4 in, run `npm run telemetry:dogs -- --dump` to inspect reads, write its keys file (check frames with ffmpeg contact sheets), then `npm run telemetry:dogs`, `npm run transcode -- 28 dogs`, `npm run races`. Race ids are `d<nn>`; assets go to `public/assets/races/dogs/dog-<nn>.mp4/.jpg`.
-- Trap colours (`TRAPS`, matching the Kiron chips): 1 red, 2 blue, 3 white, 4 black, 5 yellow, 6 black/white hoops. Traps 7 (green) and 8 (yellow/black hoops) only run as virtual runners.
-- A game's races are the videos whose `venue` matches it (`gameRaces()`): today `d01` is Crawford Park and `d02` Summerset Park, one video each, so every race of a game replays the same footage until more videos for that venue are added.
+- Trap colours (`TRAPS`, matching the Kiron chips): 1 red, 2 blue, 3 white, 4 black, 5 yellow, 6 black/white hoops, 7 black/red quarters, 8 green (7 and 8 match the Summerset Park trap box).
+- A game's races are the videos whose `venue` matches it (`gameRaces()`): today `d01` is Crawford Park, and Summerset Park has `d02` (6 dogs + 2 virtual) plus `s123`–`s126`.
+- **Summerset Park 8-dog footage** (`4x Summerset Park Greyhound examples/`): 640x360 30fps H.264, 360m, no HUD and no slow-mo replay (so no Replay button). Telemetry ships as `<name>_<n>.csv` in the horse line format, so no keys file is needed. The file name is **not** the finish order (`1-2-4_1` finishes 1-2-3; the footage agrees with the CSV). Ids are `s<digits of the name>`, and assets are `public/assets/races/dogs/summerset-<digits>.*`.
 
 ### Virtual runners (`virtual.js`)
 - When a game's `runners` exceeds the video's field (Summerset Park: 8 on 6-dog footage), `newRace()` builds the full field and `withVirtualRunners(race, field)` returns the race with `runners`, `result` and `orderEvents` covering everyone, plus `virtual: [7, 8]`.

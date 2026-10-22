@@ -22,13 +22,17 @@ const SOURCES = [
   { sport: 'dogs', dir: 'Dog racing videos', fps: 30, trimSec: null,
     id: f => `d${f.match(/-(\d+)\.txt$/)[1]}`, venue: () => null,
     media: id => `assets/races/dogs/dog-${id.slice(1)}` },
+  // Summerset Park 8-dog footage: telemetry ships as <result>_<n>.csv (same line format), e.g. 1-2-3_1 → s123.
+  { sport: 'dogs', dir: '4x Summerset Park Greyhound examples', ext: '.csv', fps: 30, trimSec: null,
+    id: f => `s${f.split('_')[0].replace(/-/g, '')}`, venue: () => 'Summerset Park',
+    media: id => `assets/races/dogs/summerset-${id.slice(1)}` },
 ];
 
 const races = [];
 for (const src of SOURCES) {
   const dir = join(ROOT, src.dir);
   if (!existsSync(dir)) { console.warn(`! ${src.dir}/ missing — no ${src.sport} races`); continue; }
-  for (const file of readdirSync(dir).filter(f => f.endsWith('.txt')).sort()) {
+  for (const file of readdirSync(dir).filter(f => f.endsWith(src.ext || '.txt')).sort()) {
     const id = src.id(file);
     const text = readFileSync(join(dir, file), 'utf8').split(/\r?\n/).map(l => l.trim());
     const meta = Object.fromEntries(text.filter(l => /^#\s*\w+=/.test(l)).map(l => l.replace(/^#\s*/, '').split('=')));

@@ -45,7 +45,7 @@ function silkSVG(no) {
   return svg;
 }
 
-// Trap jacket: a rounded square in the trap colours with the number on it (hoops for trap 6).
+// Trap jacket: a rounded square in the trap colours with the number on it (hoops for trap 6, quarters for 7).
 const RUG = 'x="5" y="5" width="30" height="30" rx="6.5"';
 function trapSVG(no) {
   const t = sport().colours[no] || { body: '#777', ink: '#fff' };
@@ -54,6 +54,8 @@ function trapSVG(no) {
   if (t.pattern === 'hoops') {
     for (let y = 5 + 30 / 7, i = 0; i < 3; i++, y += 60 / 7) hoops += `<rect x="5" y="${y.toFixed(2)}" width="30" height="${(30 / 7).toFixed(2)}"/>`;
     hoops = `<g clip-path="url(#trapRug)" fill="${t.alt}">${hoops}</g>`;
+  } else if (t.pattern === 'quarters') {   // alt in the top-right and bottom-left quarters
+    hoops = `<g clip-path="url(#trapRug)" fill="${t.alt}"><rect x="20" y="5" width="15" height="15"/><rect x="5" y="20" width="15" height="15"/></g>`;
   }
   const outline = t.pattern === 'hoops' ? ` stroke="#fff" stroke-width="2.4" paint-order="stroke" stroke-linejoin="round"` : '';
   return `<svg class="silk silk--trap" viewBox="0 0 40 40" aria-hidden="true">` +

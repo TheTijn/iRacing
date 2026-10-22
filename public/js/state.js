@@ -3,7 +3,7 @@ import { SPORTS, GAMES } from './sports.js';
 
 export const state = {
   phase: 'loading',          // loading | lobby | betting | racing | result
-  game: 'crawford',          // lobby game (GAMES in sports.js): a venue of a sport, with its field size
+  game: 'summerset',         // lobby game (GAMES in sports.js): a venue of a sport, with its field size
   sport: 'dogs',             // the game's sport: dogs | horses (see sports.js)
   races: [],                 // telemetry from data/races.json (all sports)
   race: null,                // current race telemetry (video, plus any virtual runners)

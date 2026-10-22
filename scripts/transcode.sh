@@ -32,9 +32,17 @@ if [[ -z "$ONLY" || "$ONLY" == dogs ]]; then
   OUT="public/assets/races/dogs"
   mkdir -p "$OUT"
   for f in "Dog racing videos"/*.mp4; do
+    [[ -e "$f" ]] || continue
     id="$(basename "$f" .mp4 | sed -E 's/.*-([0-9]+)$/\1/')"
     echo "→ dogs $id"
     encode "$f" "$OUT/dog-$id.mp4" "$OUT/dog-$id.jpg" 60 7          # traps open at 4s
+  done
+  # Summerset Park 8-dog footage (640x360, so scale=960 upscales; ~44s): <result>_<n>.mp4 → summerset-<result>.mp4
+  for f in "4x Summerset Park Greyhound examples"/*.mp4; do
+    [[ -e "$f" ]] || continue
+    id="$(basename "$f" .mp4 | sed -E 's/_[0-9]+$//; s/-//g')"
+    echo "→ dogs summerset $id"
+    encode "$f" "$OUT/summerset-$id.mp4" "$OUT/summerset-$id.jpg" 60 7   # traps open at 4s
   done
 fi
 ls -lh public/assets/races public/assets/races/dogs 2>/dev/null
