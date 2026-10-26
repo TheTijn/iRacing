@@ -1,8 +1,9 @@
 // Instant Racing: global styles (angular.json → styles). The partials live in src/styles/, one per feature.
 // They stay global, not component-scoped: the responsive / desktop partials restyle every view per breakpoint
 // and must come after the feature partials to win ties, which component style injection can't guarantee.
-// Bootstrap (layout only) comes first so the app's own rules win ties.
-@use 'bootstrap';
+// Bootstrap (layout only) comes first so the app's own rules win ties. Its path is explicit: a bare 'bootstrap'
+// resolves to node_modules/bootstrap (the first includePath), i.e. all of stock Bootstrap instead of our partial.
+@use 'styles/bootstrap';
 @use 'base';
 @use 'card';
 @use 'h2h';
