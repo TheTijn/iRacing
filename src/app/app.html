@@ -1,0 +1,22 @@
+<div class="grain" aria-hidden="true"></div>
+
+<header app-topbar></header>
+
+<div class="app__body row g-0 flex-grow-1 flex-nowrap min-h-0">
+  <main class="views col min-w-0">
+    <section app-lobby></section>
+    <section app-race-card></section>
+    <section app-live-race></section>
+    <section app-result></section>
+  </main>
+  <!-- Phones: bottom sheet (absolute, out of the row). lg: docked column next to the views. -->
+  <aside app-betslip></aside>
+</div>
+<div class="scrim" [class.is-on]="scrimOn()" (click)="closeOverlays()"></div>
+
+<div app-settings-sheet></div>
+<div app-history-sheet></div>
+<div app-replay></div>
+
+<canvas #fx class="fx" aria-hidden="true"></canvas>
+<div class="toast" role="status" [class.is-on]="ui.toastOn()" [class.is-error]="ui.toastError()">{{ ui.toastText() }}</div>

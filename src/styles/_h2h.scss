@@ -1,0 +1,61 @@
+@use 'tokens' as *;
+
+// Head to Head tab on the race card: matchup cards (F1 v F2, F2 v F3, F3 v F4) and the winner markets
+// (Odd / Even, High / Low). Rows and columns are Bootstrap (in race-card.html); this is the skin.
+.h2h {
+  flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  padding: 0 12px calc(var(--slip-h) + 16px);
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+
+  &__group { padding-top: 16px; }
+
+  // ---------- Matchups ----------
+  &__match {
+    padding: 12px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line);
+    & + & { margin-top: 8px; }
+  }
+  &__vs {
+    height: 44px; display: grid; place-items: center; padding: 0 10px;
+    @include display(15px, 800, 0.06em); color: var(--text-3);
+  }
+  &__side--end { text-align: right; > * { flex-direction: row-reverse; } }
+  &__rank {
+    padding: 2px 6px; border-radius: 99px; background: rgba(255, 181, 71, 0.14); color: var(--amber);
+    font-size: 10px; font-weight: 800; letter-spacing: 0.06em; @include num;
+  }
+  &__name { font-size: 15px; font-weight: 650; letter-spacing: -0.005em; }
+  &__silk {
+    position: relative; width: 44px; height: 44px; padding: 4px; border-radius: 12px;
+    background: radial-gradient(80% 80% at 50% 20%, var(--surface-3), var(--bg-2)); border: 1px solid var(--line);
+    .saddle { position: absolute; right: -5px; bottom: -5px; box-shadow: 0 0 0 2px var(--surface); }
+  }
+
+  // ---------- Winner markets ----------
+  &__set + &__set { margin-top: 0; }   // the second row's gutter already spaces it
+}
+
+.odd--wide { width: auto; min-width: 0; height: 44px; .odd__price { font-size: 17px; } }
+
+.mkt {
+  min-height: 64px; padding: 10px 12px 10px 14px; border-radius: 14px; text-align: left;
+  background: var(--surface); border: 1px solid var(--line-2);
+  @include press(0.97);
+  @include hover { border-color: rgba(63, 229, 140, 0.45); }
+  &__side { @include display(20px, 800, 0.03em); line-height: 1; }
+  &__no { width: 18px; height: 18px; display: block; }
+  &__price { flex: none; @include num; font-size: 17px; font-weight: 750; }
+  &.is-on {
+    background: var(--accent); border-color: var(--accent); color: var(--accent-ink);
+    box-shadow: 0 8px 22px -10px var(--accent-glow);
+  }
+}
+
+@include wide {
+  .h2h { padding: 0 18px 18px; }
+  .h2h__match { padding: 14px 16px; }
+  .h2h__silk { width: 52px; height: 52px; }
+  .odd--wide { height: 52px; }
+  .h2h__vs { height: 52px; padding: 0 16px; }
+  .mkt { min-height: 72px; }
+}

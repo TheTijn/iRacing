@@ -1,0 +1,54 @@
+<button #bar class="slip__bar" [attr.aria-expanded]="store.open()" aria-controls="slipPanel" (click)="toggle()">
+  <span class="slip__grip" aria-hidden="true"></span>
+  <span class="slip__top d-flex align-items-center gap-2">
+    <b>Betslip</b><span #count class="slip__count">{{ store.bets().length }}</span>
+    <span class="slip__cost">Total <b>{{ fmt.money(store.cost()) }}</b></span>
+    <svg class="slip__chev"><use href="#i-chevron"/></svg>
+  </span>
+</button>
+
+<div #panel class="slip__panel d-flex flex-column" id="slipPanel">
+  <div class="slip__stake">
+    <span class="slip__stake-label">Stake per bet</span>
+    <div class="stake-chips">
+      @for (v of chips; track v) {
+        <button class="stake-chip" [class.is-on]="allSame() && v === store.bets()[0].stake" (click)="setAllStakes(v)">{{ fmt.money(v, { compact: true }) }}</button>
+      }
+      <input #custom class="stake-input" type="text" inputmode="decimal" placeholder="Other" aria-label="Custom stake"
+        (change)="customStake(custom)" (keydown.enter)="custom.blur()">
+    </div>
+  </div>
+  <p class="slip__empty">Your betslip is empty.<br>Tap a price to add a bet.</p>
+  <ul class="tickets">
+    @for (b of store.bets(); track b.id) {
+      <li class="ticket">
+        <span class="ticket__type">{{ store.title(b) }}<em>{{ b.id }}</em></span>
+        <div class="ticket__price">
+          <span class="ticket__odds">{{ b.combos.length === 1 ? fmt.odds(b.combos[0].price) : b.combos.length + ' combos' }}</span>
+          @if (b.combos.length > 1) { <span class="ticket__combos">{{ fmt.money(b.stake) }} per combo</span> }
+        </div>
+        <div class="ticket__sel" appBetSelection [bet]="b" [names]="names()"></div>
+        <div class="ticket__foot">
+          <label class="ticket__stake">Stake
+            <input #stake type="text" inputmode="decimal" [value]="b.stake.toFixed(2)" [attr.aria-label]="'Stake for ' + store.title(b)"
+              (change)="ticketStake(stake, b)" (keydown.enter)="stake.blur()">
+          </label>
+          <span>Cost <b>{{ fmt.money(cost(b)) }}</b> · Up to <b>{{ fmt.money(ticketMax().get(b.id) ?? 0) }}</b></span>
+        </div>
+        <button class="ticket__rm" aria-label="Remove bet" (click)="remove($event, b.id!)"><svg><use href="#i-close"/></svg></button>
+      </li>
+    }
+  </ul>
+  <button class="slip__clear align-self-center d-inline-flex align-items-center gap-2" (click)="clearAll()"><svg><use href="#i-trash"/></svg>Clear all</button>
+</div>
+
+<div #foot class="slip__foot d-flex align-items-center gap-3">
+  <div class="slip__ret d-flex flex-column flex-grow-1 min-w-0">
+    <span class="slip__ret-label">Max return</span>
+    <span #ret class="slip__ret-value">{{ fmt.money(store.maxReturn()) }}</span>
+  </div>
+  <button class="btn btn--primary btn--place flex-shrink-0" [disabled]="!store.bets().length" (click)="place()">
+    <span class="btn--place__label">Place bet</span>
+    <span class="btn--place__amt">{{ fmt.money(store.cost()) }}</span>
+  </button>
+</div>

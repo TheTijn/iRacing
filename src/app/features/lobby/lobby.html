@@ -1,0 +1,27 @@
+<div class="lobby d-flex flex-column gap-3">
+  <header class="lobby__head">
+    <p class="eyebrow"><span class="dot"></span>Lobby</p>
+    <h1 class="lobby__title">Pick a game</h1>
+  </header>
+  <!-- Bootstrap row: one tile per line on phones (lines stretch to fill the height), three across from lg. -->
+  <div class="lobby__grid row row-cols-1 row-cols-lg-3 g-3 flex-grow-1">
+    @for (t of tiles(); track t.key) {
+      <div class="col">
+        <button class="game h-100 w-100 d-flex align-items-end justify-content-between gap-3" [class.is-current]="t.current"
+          [style.--thumb]="t.thumb" [attr.aria-label]="t.venue + ', Instant ' + t.brand + (t.current ? ' (playing now)' : '')"
+          (click)="flow.pickGame(t.key)">
+          <span class="game__bg" aria-hidden="true"></span>
+          @if (t.current) {
+            <span class="game__badge d-flex align-items-center gap-2"><span class="dot"></span>Playing</span>
+          }
+          <span class="game__body d-flex flex-column align-items-start gap-2 min-w-0">
+            <span class="game__icon" aria-hidden="true"><svg><use [attr.href]="t.icon"/></svg></span>
+            <span class="game__name d-flex flex-column"><b>{{ t.venue }}</b><span>Instant {{ t.brand }}</span></span>
+            <span class="game__meta">{{ t.meta }}</span>
+          </span>
+          <span class="game__cta d-flex align-items-center flex-shrink-0">{{ t.current ? 'Resume' : 'Play' }}<svg><use href="#i-chevron"/></svg></span>
+        </button>
+      </div>
+    }
+  </div>
+</div>

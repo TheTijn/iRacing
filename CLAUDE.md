@@ -1,19 +1,21 @@
 # CLAUDE.md
 
-Instant Racing: a mobile-first instant **greyhound** racing betting game (play money), with a widescreen desktop layout. It is one engine with per-sport config in `public/js/sports.js`. The **lobby** (tap the wordmark's two stripes) offers three **games** (`GAMES` in `sports.js`): **Summerset Park** (8 dogs, the default: four 8-dog videos plus a 6-dog video with 2 virtual runners), **Crawford Park** (6 dogs) and **Milnerton** (horses). Sibling of iHockey, and it uses the same deploy model: an Express static server, SCSS, and vanilla ES modules with no bundler.
+Instant Racing: a mobile-first instant **greyhound** racing betting game (play money), with a widescreen desktop layout. It is one engine with per-sport config in `src/app/core/sports.ts`. The **lobby** (tap the wordmark's two stripes) offers three **games** (`GAMES` in `sports.ts`): **Summerset Park** (8 dogs, the default: four 8-dog videos plus a 6-dog video with 2 virtual runners), **Crawford Park** (6 dogs) and **Milnerton** (horses). It is an **Angular 22** app (standalone components, signals, zoneless, Angular CLI / `@angular/build`), served in production by a small Express static server.
 
 ## Commands
 
 ```bash
-npm run dev          # SCSS watch + server auto-reload (PORT env, default 3100)
-npm start            # compile SCSS once, then serve
-npm test             # node:test — pricing, settlement, field/market sanity (scripts/*.test.mjs)
+npm run dev          # ng serve on http://localhost:3100 (live reload)
+npm start            # ng build, then serve dist/ with Express (PORT env, default 3100)
+npm run build        # ng build (production) → dist/instant-racing/browser
+npm run serve        # serve an existing build
+npm test             # ng test (Vitest): pricing, settlement, field/market sanity (src/app/core/*.spec.ts)
 npm run races        # rebuild public/data/races.json from "Test Videos/*.txt" + "Dog racing videos/*.txt" (with asserts)
 npm run transcode    # re-encode both sports' sources → public/assets/races/(dogs/) (needs ffmpeg; `-- 28 dogs` for one sport)
 npm run telemetry:dogs  # derive "Dog racing videos/*.txt" from the footage + *.keys.json (needs ffmpeg)
 ```
 
-Debug: `?race=190` / `?race=d01` forces a specific video every race (and opens its game). `?game=summerset` opens a game, `?sport=horses` that sport's first game. `window.__ir.state`, `__ir.setGame('summerset')` / `__ir.setSport('horses')` in the console.
+Debug: `?race=190` / `?race=d01` forces a specific video every race (and opens its game). `?game=summerset` opens a game, `?sport=horses` that sport's first game. In the console: `__ir.state` (the `GameState` signals, e.g. `__ir.state.balance()`), `__ir.slip`, `__ir.setGame('summerset')` / `__ir.setSport('horses')`.
 
 ## Race assets pipeline
 
@@ -24,7 +26,8 @@ Debug: `?race=190` / `?race=d01` forces a specific video every race (and opens i
   - The finish is the first `I` frame with distance 0.
 - `scripts/build-races.mjs` compresses this into `races.json`: order-change events, sampled distance, finish and replay frames, and the result. It asserts consistency.
   - The runner count, distance and finish frame are all read from the data. New videos (e.g. 6 runners / 400m) just need the mp4 + txt, then running the two scripts.
-- Silks per saddle number are in `public/js/sports.js` (`SILKS`). They match the jockeys in the videos and are the same across every video.
+- `public/` is Angular's static assets folder (copied to the build root): `public/assets/races/` (media) and `public/data/races.json`.
+- Silks per saddle number are in `src/app/core/sports.ts` (`SILKS`). They match the jockeys in the videos and are the same across every video.
 
 ### Greyhounds (`Dog racing videos/`)
 - Kiron virtual greyhound races: 6 traps, 720m, 1080p30 H.264, ~150MB each (gitignored). Kiron's HUD (venue, distance, running-order bar) is burned into the footage and kept as-is.
@@ -35,35 +38,40 @@ Debug: `?race=190` / `?race=d01` forces a specific video every race (and opens i
 - A game's races are the videos whose `venue` matches it (`gameRaces()`): today `d01` is Crawford Park, and Summerset Park has `d02` (6 dogs + 2 virtual) plus `s123`–`s126`.
 - **Summerset Park 8-dog footage** (`4x Summerset Park Greyhound examples/`): 640x360 30fps H.264, 360m, no HUD and no slow-mo replay (so no Replay button). Telemetry ships as `<name>_<n>.csv` in the horse line format, so no keys file is needed. The file name is **not** the finish order (`1-2-4_1` finishes 1-2-3; the footage agrees with the CSV). Ids are `s<digits of the name>`, and assets are `public/assets/races/dogs/summerset-<digits>.*`.
 
-### Virtual runners (`virtual.js`)
+### Virtual runners (`core/virtual.ts`)
 - When a game's `runners` exceeds the video's field (Summerset Park: 8 on 6-dog footage), `newRace()` builds the full field and `withVirtualRunners(race, field)` returns the race with `runners`, `result` and `orderEvents` covering everyone, plus `virtual: [7, 8]`.
 - Each virtual runner's finishing place is drawn from its price (a Harville sample of the whole finish), so its odds stay honest; the video's dogs keep their filmed order relative to each other. During the race it moves through the field (a random place out of the traps, then steps of ≤2 places every 2–4.5s homing in on its final place, held from 82% of the race).
 - The video and its burned-in HUD still show six dogs. The app's running order strip, live bets, callouts and settlement use the merged order.
 
-## Architecture (`public/js/`)
+## Architecture (`src/app/`)
 
-| Module | Role |
+Angular 22: standalone components, **signals** for all state, zoneless change detection, `OnPush` everywhere. Views derive from signals, so there is no render/emit plumbing: change a signal and the templates follow.
+
+| Folder / file | Role |
 |---|---|
-| `main.js` | Boot + phase machine (`betting → racing → result`, plus `lobby` between races; ~1.2s finish-line beat on natural finishes, none on Skip/Instant), shuffle bag per game, `setGame()`, rebet/next, settings, history, replay |
-| `state.js` | Single mutable `state` + tiny event bus (`emit`/`on`) + `$`/`$$` |
-| `pricing.js` | **Pure** (also imported by node tests): bet types, Harville exotic pricing, combination expansion, head to head / odd-even / high-low pricing (`h2hPairs()`, `winnerSets()`), `settle()`, exact `maxReturn()`, `liveState()`, odds formats |
-| `sports.js` | Pure per-sport config: runner profiles, silks/traps, surface, wording, exotic list, UK greyhound labels (Forecast/Tricast, boxed = Reverse Forecast/Combination Tricast), `betLabel()`/`betHint()`; `GAMES` / `GAME_ORDER` / `gameRaces()` |
-| `virtual.js` | Pure: virtual runners for games bigger than their video (finish drawn from price, path merged into the running order) |
-| `field.js` | Pure: random profiles of the sport → saddle/trap numbers; rescales prices to a fixed book (11% win, 11% per place) |
-| `lobby.js` | Lobby view: one thumbnail tile per game (venue, field size + running thumbnail of its first race), `Playing`/`Resume` on the current one |
-| `racecard.js` | Market tabs (Win & Place, Exotics, Head to Head), runner list, Win/Place odds buttons, exotic pick grid + builder bar, Head to Head panel |
-| `betslip.js` | Bottom-sheet slip, stakes, bet descriptions (shared by other views) |
-| `race.js` | Video → frame clock (timer fallback for data saver / video failure), distance rail, running-order strip, live bet states, callouts, skip, finish beat |
-| `results.js` | Win / partial-return / loss hero, podium, settled bets, actions |
-| `ui.js`, `fx.js`, `silks.js`, `store.js` | View transitions/sheets/toast (emits `phase`), GSAP + canvas particles, `runnerIcon()` silk / trap-jacket SVGs, persistence + money/odds formatting |
+| `core/` | **Pure TypeScript** (no Angular, no DOM; unit-tested in `*.spec.ts`). `pricing.ts`: bet types, Harville exotic pricing, combination expansion, head to head / odd-even / high-low pricing (`h2hPairs()`, `winnerSets()`), `settle()`, exact `maxReturn()`, `liveState()`, odds formats. `sports.ts`: runner profiles, silks/traps, wording, exotic list, UK greyhound labels (Forecast/Tricast, boxed = Reverse Forecast/Combination Tricast), `betLabel()`/`betHint()`, `GAMES` / `GAME_ORDER` / `gameRaces()`. `field.ts`: random profiles → saddle/trap numbers, prices rescaled to a fixed book (11% win, 11% per place). `virtual.ts`: virtual runners. `config.ts`, `models.ts` (types) |
+| `services/game-state.ts` | `GameState`: every piece of game state as a signal (phase, game, races, race, field, market, legs, placed, balance, settings…) + `sport()` / `gameInfo()` computeds |
+| `services/game-flow.ts` | `GameFlow`: boot + phase machine (`betting → racing → result`, plus `lobby` between races; ~1.2s finish-line beat on natural finishes, none on Skip/Instant), shuffle bag per game, `setGame()`, place/settle, rebet/next, lobby, settings, the `window.__ir` debug handle |
+| `services/betslip-store.ts` | `BetslipStore`: slip bets, stakes, open state; `betKey()` / `slipCost()` |
+| `services/race-engine.ts` | `RaceEngine`: video → frame clock (timer fallback for data saver / video failure / stalls), distance rail, running order, live bet states, callouts, skip, finish beat, all as signals |
+| `services/ui-shell.ts` | `UiShell`: toast, sheets, balance pill display, `--slip-h`, GSAP view transitions (`showView()`) |
+| `services/` (rest) | `Motion` (GSAP, haptics, canvas confetti/coins), `Formatter` (money/odds; reads settings), `Persistence` (storage), `ReplayPlayer`, `Viewport` (docked-slip media query) |
+| `features/` | One folder per view: `topbar`, `lobby`, `race-card` (market tabs, runner list, exotic pick grid + builder, Head to Head), `live-race`, `result`, `betslip`, `sheets` (settings, history), `replay` |
+| `shared/` | `RunnerIcon` (`<svg appRunnerIcon [no]>`: silk / trap-jacket SVG), `BetSelection` (a bet as runner chips: slip, result, history) |
+| `app.ts` | Shell: Bootstrap layout of top bar + [views \| betslip], scrim, sheets, FX canvas, toast, Escape key, page title |
+
+Angular conventions here:
+- Components use **attribute selectors on their own semantic element** (`<section app-race-card>`, `<aside app-betslip>`, `<header app-topbar>`) and set their classes in `host`. The DOM stays exactly what the Bootstrap rows/cols and the global SCSS expect (no wrapper element between a `.row` and its columns).
+- Imperative DOM is limited to animation and media: GSAP tweens run in `afterNextRender`, `RaceEngine` / `ReplayPlayer` drive the `<video>` elements their views attach, and `UiShell.showView()` cross-fades the four registered view elements.
+- Video `play()` must stay synchronous in the tap handler (iOS gesture rule), so never move it behind an effect or a promise.
 
 Key rules:
-- **Game and sport**: `state.game` (a `GAMES` key, not persisted) sets `state.sport` (`dogs`|`horses`); `game()` / `sport()` in `state.js` return their config. `sport().brand` is the wordmark's second line and the page title ("Games" while in the lobby). Each race in `races.json` carries `sport` and `venue`; the field is tagged with its `game`.
+- **Game and sport**: `GameState.game` (a `GAMES` key, not persisted) sets `sportKey()` (`dogs`|`horses`); `gameInfo()` / `sport()` return their config. `sport().brand` is the wordmark's second line and the page title ("Games" while in the lobby). Each race in `races.json` carries `sport` and `venue`; the field is tagged with its `game`.
 - **Lobby**: opens from betting/result only (a toast during a race). Picking another game calls `setGame()`; picking the current one goes back to the race card as it was, or starts the next race if the lobby was opened from the result screen. Escape or the stripes again also resume. `setGame()` is only allowed in the lobby/betting/result phases; it clears the slip and Rebet picks and starts a new race. Balance and history are shared (history entries are tagged with sport and venue). Never hard-code "horse"/"trap" copy: use `sport().noun` / `sport().number` / `betHint()`.
 - **Head to Head tab**: `H2H` (sel `[a, b]` = a finishes ahead of b, priced `p_a / (p_a + p_b)`, exact under Harville) for F1 v F2, F2 v F3, F3 v F4 by price; `ODDEVEN` / `HILO` (the winner's number is odd/even, or in the low/high half of the field; `bet.side` names it). All three are two-way markets on an 11% book (`MATCH_BOOK`). `maxReturn()` also tries every order of the head to head runners behind each podium, so it stays exact.
 - `BET_TYPES` keys are the same for both sports, so `settle()`/pricing never branch on sport. Only labels and the offered exotics differ. With 6 runners `placesFor()` pays the top 2.
-- **Every bet uses one shape**: `{ type, stake (per combo), box, legs, combos: [{sel, price}] }` (+ `side` on Odd/Even and High/Low). `betKey()` in `betslip.js` is its slip identity. `settle(bet, finishOrder)` handles every market, and so do live status and max return. Prices are fixed when the bet is added.
-- **Balance**: the stake is deducted when the bet is placed. Winnings are added to `state.balance` at the finish, but the pill only animates on the result screen. Don't show winnings before the reveal (iHockey's mistake).
+- **Every bet uses one shape**: `{ type, stake (per combo), box, legs, combos: [{sel, price}] }` (+ `side` on Odd/Even and High/Low). `betKey()` in `betslip-store.ts` is its slip identity. `settle(bet, finishOrder)` handles every market, and so do live status and max return. Prices are fixed when the bet is added.
+- **Balance**: the stake is deducted when the bet is placed. Winnings are added to `GameState.balance` at the finish, but the pill (`UiShell.shownBalance`) only counts them in on the result screen. Don't show winnings before the reveal (iHockey's mistake).
 - The result is decided by which video plays, and the video is chosen during betting (shuffle bag) so it can preload. Odds only describe a fair market, and the result is not drawn from them.
 - Win celebrations (confetti/coins) only happen when the return is **more than the stake**. A partial return is shown plainly, with no fake "win" (responsible-gambling norm).
 - Show/hide overlays with opacity/visibility classes. `newRace()` resets race/reveal state.
@@ -71,8 +79,8 @@ Key rules:
 
 ## Styles
 
-`scss/style.scss` pulls in the partials (`_bootstrap`, `_tokens`, `_base`, `_card`, `_h2h`, `_slip`, `_race`, `_result`, `_lobby`, `_sheets`, `_responsive`, `_desktop`). **`public/css/style.css` is compiled output, so never edit it.**
-- **Bootstrap 5.3 structures the layout** (`_bootstrap.scss`, compiled from `node_modules/bootstrap/scss` via `--load-path`; the `sass` scripts pass `--quiet-deps --silence-deprecation=import` for its `@import`s). It's **layout only**: the grid (`row` / `col-*` / `row-cols-*` / `g-*`), flex, spacing, display, sizing and gap utilities, and the stack / `text-truncate` / `visually-hidden` helpers. There's no reboot, no components and no theme colours; the look is the app's own SCSS.
+`src/styles.scss` (the global stylesheet in `angular.json`) pulls in the partials in `src/styles/` (`_bootstrap`, `_tokens`, `_base`, `_card`, `_h2h`, `_slip`, `_race`, `_result`, `_lobby`, `_sheets`, `_responsive`, `_desktop`). Styles are **global, not component-scoped**, on purpose: `_responsive` / `_desktop` restyle every view per breakpoint and must load after the feature partials to win ties, which component style injection can't guarantee. New components get `style: none`; add their rules to the matching partial.
+- **Bootstrap 5.3 structures the layout** (`_bootstrap.scss`, compiled from `node_modules/bootstrap/scss`: `angular.json` sets the `includePaths` and silences the `import` deprecation for its `@import`s). It's **layout only**: the grid (`row` / `col-*` / `row-cols-*` / `g-*`), flex, spacing, display, sizing and gap utilities, and the stack / `text-truncate` / `visually-hidden` helpers. There's no reboot, no components and no theme colours; the look is the app's own SCSS.
   - Breakpoints are shared with `_tokens.scss` (`$breakpoints`): **`lg` (≥1024) is the desktop layout and `xl` (≥1280) the wide one**. 768–1023 is the 440px tablet shell, which lays out like a phone, so **don't use `md`-responsive classes** (`sm` likewise).
   - The spacing scale is 4px steps (`1`=4, `2`=8, `3`=12, `4`=16, `5`=20, `6`=24px), not Bootstrap's rem defaults. Plus the custom utilities `min-h-0` / `min-w-0` for flex children that must shrink and scroll.
   - Utilities are compiled **without `!important`** and Bootstrap comes first, so state and media rules in the partials (e.g. hiding the top bar in the landscape HUD) still win. Keep `display` in SCSS, not as a `d-*` class, on anything a media query or state class hides.
@@ -83,6 +91,6 @@ Key rules:
   - Full-bleed on phones.
   - Landscape phones get a full-screen video HUD.
   - At 768–1023px wide (and ≥600 tall) the app becomes a 440px shell over a blurred race still.
-  - At ≥1024px (Bootstrap `lg`) there is a widescreen desktop layout (`_desktop.scss`; mixins `wide` / `wide-xl` in `_tokens.scss`). The app fills the viewport, capped at 1680px, and the betslip becomes a docked right-hand column (`col-lg-auto` next to the `col` of views) that is always open while betting (`dockMq` in `betslip.js` must match `wide`). Racing: the video and distance rail sit on the left (`.race-main`, `col-lg`), with running order, live bets and Skip in a side panel (`.race-side`, `col-lg-auto`). Result: the hero and podium sit on the left, with bets and actions on the right. At ≥1280px (`xl`) the race card gets a tall hero column (`.card-hero`, `col-xl-5`). On phones the same rows stack with `flex-column`. The fixed column widths (`$dock-w`, `--side-w`) and panel skins live in `_desktop.scss`.
+  - At ≥1024px (Bootstrap `lg`) there is a widescreen desktop layout (`_desktop.scss`; mixins `wide` / `wide-xl` in `_tokens.scss`). The app fills the viewport, capped at 1680px, and the betslip becomes a docked right-hand column (`col-lg-auto` next to the `col` of views) that is always open while betting (`Viewport.docked` in `services/viewport.ts` must match `wide`). Racing: the video and distance rail sit on the left (`.race-main`, `col-lg`), with running order, live bets and Skip in a side panel (`.race-side`, `col-lg-auto`). Result: the hero and podium sit on the left, with bets and actions on the right. At ≥1280px (`xl`) the race card gets a tall hero column (`.card-hero`, `col-xl-5`). On phones the same rows stack with `flex-column`. The fixed column widths (`$dock-w`, `--side-w`) and panel skins live in `_desktop.scss`.
   - Sheets become centred dialogs on desktop.
-- Cache busting is automatic: `server.js` serves `index.html` with every `__V__` replaced by a per-start build version (`BUILD_ID` env, else start time) and swaps `<!--importmap-->` for an import map of every `public/js/*.js`, so all ES modules are versioned. HTML/JS/CSS/JSON are sent `no-cache` (ETag revalidation), media for 7 days. Don't hand-write `?v=` numbers, and keep the `<!--importmap-->` comment before the module script.
+- Cache busting comes from the Angular build: JS/CSS file names carry content hashes, and `server.js` caches those for a year (`immutable`). `index.html` and `races.json` are sent `no-cache` (ETag revalidation), media for 7 days.

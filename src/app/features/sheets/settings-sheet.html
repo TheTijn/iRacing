@@ -1,0 +1,30 @@
+@let s = state.settings();
+<div class="sheet__head">
+  <h2 id="settingsTitle">Settings</h2>
+  <button #close class="icon-btn" aria-label="Close" (click)="ui.closeSheet()"><svg><use href="#i-close"/></svg></button>
+</div>
+<div class="sheet__body">
+  <div class="field"><span class="field__label">Odds format</span>
+    <div class="pills">
+      @for (o of oddsFormats; track o.value) {
+        <button [class.is-on]="s.odds === o.value" (click)="set('odds', o.value)">{{ o.label }} <small>{{ o.sample }}</small></button>
+      }
+    </div>
+  </div>
+  <div class="field"><span class="field__label">Currency</span>
+    <div class="pills">
+      @for (c of currencies; track c.value) {
+        <button [class.is-on]="s.currency === c.value" (click)="set('currency', c.value)">{{ c.label }}</button>
+      }
+    </div>
+  </div>
+  <label class="field field--row"><span><b>Instant results</b><small>Skip the race video and go straight to the result</small></span>
+    <span class="switch"><input type="checkbox" [checked]="s.instant" (change)="set('instant', $any($event.target).checked)"><span class="switch__track"><span class="switch__knob"></span></span></span>
+  </label>
+  <label class="field field--row"><span><b>Data saver</b><small>Hide the video and follow the live tracker only</small></span>
+    <span class="switch"><input type="checkbox" [checked]="s.saver" (change)="set('saver', $any($event.target).checked)"><span class="switch__track"><span class="switch__knob"></span></span></span>
+  </label>
+  <div class="field field--row"><span><b>Demo balance</b><small>Play money only — no real funds</small></span>
+    <button class="btn btn--ghost btn--sm" (click)="flow.resetBalance()">Reset</button>
+  </div>
+</div>

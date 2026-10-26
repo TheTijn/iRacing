@@ -1,0 +1,173 @@
+@let f = state.field();
+@let isH2H = state.market() === 'h2h';
+<!-- Phones and lg: race header above the card. xl: header column | card column. -->
+<div class="row g-0 flex-column flex-xl-row flex-nowrap flex-grow-1 min-h-0 column-gap-xl-5">
+  <div class="card-hero col-12 col-xl-5">
+    <div class="race-head d-flex align-items-end justify-content-between gap-3">
+      <div class="race-head__bg" aria-hidden="true" [style.background-image]="headBg()"></div>
+      <div class="race-head__main min-w-0">
+        <p class="eyebrow"><span class="dot"></span><span>{{ meta() }}</span></p>
+        <h1 class="race-head__title">{{ venue() }}</h1>
+        <p class="race-head__blurb">{{ blurb() }}</p>
+      </div>
+      <div class="race-head__side d-flex flex-column align-items-end">
+        <span class="race-head__no-label">Race</span>
+        <span class="race-head__no">{{ state.raceNo() }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-body col d-flex flex-column min-h-0">
+    <div class="markets">
+      <!-- Three equal Bootstrap columns under a sliding thumb -->
+      <div class="seg row g-0 row-cols-3" role="tablist" [attr.data-active]="state.market()">
+        <span class="seg__thumb" aria-hidden="true"></span>
+        @for (m of markets; track m.key) {
+          <button class="seg__btn col" role="tab" [class.is-active]="state.market() === m.key"
+            [attr.aria-selected]="state.market() === m.key" (click)="setMarket(m.key)">{{ m.label }}</button>
+        }
+      </div>
+    </div>
+
+    <div class="exotics" [hidden]="state.market() !== 'exotic'">
+      <div class="chips" role="radiogroup" aria-label="Exotic bet type">
+        @for (t of state.sport().exotics; track t) {
+          <button class="chip" [class.is-active]="t === state.exoticType()" role="radio"
+            [attr.aria-checked]="t === state.exoticType()" (click)="setExoticType(t)">{{ label(t) }}</button>
+        }
+      </div>
+      <div class="exotics__info d-flex align-items-center justify-content-between gap-3">
+        <p class="exotics__hint"><b>{{ label(state.exoticType(), boxOn()) }}</b> · {{ hint(state.exoticType(), boxOn()) }}</p>
+        <label class="switch" [hidden]="!boxable()">
+          <input type="checkbox" [checked]="state.box()" (change)="setBox($any($event.target).checked)">
+          <span class="switch__track" aria-hidden="true"><span class="switch__knob"></span></span>
+          <span class="switch__label">
+            @if (boxLabel() === 'Box') { Box <small>any order</small> } @else { {{ boxLabel() }} }
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <ol #list class="runners" aria-label="Runners" [hidden]="isH2H" (scroll)="onScroll(list)">
+      @if (f) {
+        <!-- Trap / saddle order (1, 2, 3…), like a printed racecard -->
+        @for (no of f.horses; track no) {
+          @let r = f.runners[no];
+          <li class="runner d-flex align-items-center gap-3">
+            <div class="runner__silk flex-shrink-0">
+              <svg appRunnerIcon [no]="no"></svg>
+              @if (saddles()) { <span class="saddle">{{ no }}</span> }
+            </div>
+            <div class="runner__info flex-grow-1 min-w-0">
+              <div class="runner__name"><span>{{ r.name }}</span>@if (no === f.favourite) { <em class="fav">FAV</em> }</div>
+              <div class="runner__meta">
+                <span class="form" [attr.aria-label]="'Last 5 runs ' + r.form.join(', ')">
+                  @for (x of r.form; track $index) { <i [class.w]="x === 1" [class.p]="x > 1 && x <= 3">{{ x }}</i> }
+                </span>
+                <span class="rating" [attr.aria-label]="'Rating ' + r.rating + ' of 5'">
+                  @for (i of stars; track i) { <i [class.on]="r.rating >= i" [class.half]="r.rating < i && r.rating >= i - 0.5"></i> }
+                </span>
+              </div>
+            </div>
+
+            @if (state.market() === 'wp') {
+              <div class="odds flex-shrink-0">
+                <button class="odd" [class.is-on]="slip.hasSimple('WIN', no)" [attr.aria-label]="'Win ' + r.name + ' at ' + fmt.odds(f.win[no])"
+                  (click)="slip.toggleSimple('WIN', no)">
+                  <span class="odd__price">{{ fmt.odds(f.win[no]) }}</span><span class="odd__tag">Win</span>
+                </button>
+                <button class="odd odd--place" [class.is-on]="slip.hasSimple('PLACE', no)" [attr.aria-label]="'Place ' + r.name + ' at ' + fmt.odds(f.place[no])"
+                  (click)="slip.toggleSimple('PLACE', no)">
+                  <span class="odd__price">{{ fmt.odds(f.place[no]) }}</span><span class="odd__tag">Place</span>
+                </button>
+              </div>
+            } @else if (orderedGrid()) {
+              <div class="picks flex-shrink-0">
+                @for (p of positions(); track p; let i = $index) {
+                  <button class="pick" [class.is-on]="isPicked(i, no)" [attr.aria-pressed]="isPicked(i, no)"
+                    [attr.aria-label]="p + ': #' + no" (click)="togglePick(i, no)">{{ p }}</button>
+                }
+              </div>
+            } @else {
+              <div class="picks flex-shrink-0">
+                <button class="pick pick--any" [class.is-on]="isPicked(0, no)" [attr.aria-pressed]="isPicked(0, no)"
+                  [attr.aria-label]="'Pick #' + no" (click)="togglePick(0, no)">
+                  <svg><use [attr.href]="isPicked(0, no) ? '#i-check' : '#i-plus'"/></svg><span class="p-odds">{{ fmt.odds(f.win[no]) }}</span>
+                </button>
+              </div>
+            }
+          </li>
+        }
+      }
+    </ol>
+
+    <div #h2h class="h2h" [hidden]="!isH2H" (scroll)="onScroll(h2h)">
+      <section class="h2h__group">
+        @for (m of matches(); track m.id) {
+          <div class="h2h__match row g-0 align-items-end">
+            <ng-container *ngTemplateOutlet="matchSide; context: { $implicit: m.start, end: false }" />
+            <div class="h2h__vs col-auto">vs</div>
+            <ng-container *ngTemplateOutlet="matchSide; context: { $implicit: m.end, end: true }" />
+          </div>
+        }
+      </section>
+      <section class="h2h__group">
+        @for (set of setMarkets(); track set.type) {
+          <div class="h2h__set row g-2">
+            @for (s of set.sides; track s.side) {
+              <div class="col-6">
+                <button class="mkt w-100 d-flex align-items-center justify-content-between gap-2" [class.is-on]="slip.hasKey(s.key)"
+                  [attr.aria-pressed]="slip.hasKey(s.key)" (click)="toggleBet(s.bet)"
+                  [attr.aria-label]="'Winner ' + s.side.toLowerCase() + ' (' + state.sport().number + 's ' + s.nos.join(', ') + ') at ' + fmt.odds(s.price)">
+                  <span class="d-flex flex-column align-items-start gap-1 min-w-0">
+                    <b class="mkt__side">{{ s.side }}</b>
+                    <span class="mkt__nos d-flex flex-wrap gap-1">
+                      @for (h of s.nos; track h) { <span class="mkt__no"><svg appRunnerIcon [no]="h"></svg></span> }
+                    </span>
+                  </span>
+                  <span class="mkt__price">{{ fmt.odds(s.price) }}</span>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    </div>
+
+    <div class="builder d-flex align-items-center gap-3" [class.is-on]="builderOn()" aria-live="polite">
+      @if (builderView(); as b) {
+        @if (b.err) {
+          <div class="builder__text">
+            <p class="builder__err">{{ b.err }}</p>
+            <p class="builder__line">{{ b.title }} · {{ b.hint }}</p>
+          </div>
+          <button class="btn btn--ghost" (click)="clearPicks()">Clear</button>
+        } @else {
+          <div class="builder__text">
+            <p class="builder__line"><b>{{ b.title }}</b> · {{ b.combos }} × {{ fmt.money(state.stake()) }} = <b>{{ fmt.money(b.cost) }}</b></p>
+            <p class="builder__pays">Pays up to <b>{{ fmt.money(b.pays) }}</b></p>
+          </div>
+          <button class="btn btn--primary" (click)="addExotic()">Add to slip</button>
+        }
+      }
+    </div>
+  </div>
+</div>
+
+<ng-template #matchSide let-s let-end="end">
+  <div class="h2h__side col d-flex flex-column gap-2 min-w-0" [class.h2h__side--start]="!end" [class.h2h__side--end]="end">
+    <div class="h2h__who d-flex align-items-center gap-2 min-w-0">
+      <span class="h2h__rank flex-shrink-0">F{{ s.rank }}</span><span class="h2h__name text-truncate">{{ s.name }}</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="h2h__silk flex-shrink-0">
+        <svg appRunnerIcon [no]="s.no"></svg>
+        @if (saddles()) { <span class="saddle">{{ s.no }}</span> }
+      </span>
+      <button class="odd odd--wide flex-grow-1" [class.is-on]="slip.hasKey(s.key)" [attr.aria-pressed]="slip.hasKey(s.key)"
+        [attr.aria-label]="s.name + ' to finish ahead of ' + s.rival + ' at ' + fmt.odds(s.price)" (click)="toggleBet(s.bet)">
+        <span class="odd__price">{{ fmt.odds(s.price) }}</span>
+      </button>
+    </div>
+  </div>
+</ng-template>

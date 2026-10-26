@@ -1,0 +1,77 @@
+@let o = outcome();
+<div class="result__glow" aria-hidden="true"></div>
+<!-- Phones: one scroller (hero, podium, bets) over the action row. lg: hero column | bets + actions column. -->
+<div #scroll class="result__scroll row g-0 flex-grow-1 min-h-0 align-content-start align-content-lg-stretch flex-lg-nowrap column-gap-lg-5">
+  <div class="result__main col-12 col-lg d-flex flex-column align-items-center justify-content-lg-center">
+    <div #hero class="result__hero">
+      @if (o) {
+        @switch (kind()) {
+          @case ('win') {
+            <p class="hero__eyebrow">Race {{ o.raceNo }} · You won</p>
+            <p #heroAmount class="hero__amount">{{ fmt.money(amount()) }}</p>
+            <p class="hero__sub">Staked <b>{{ fmt.money(o.staked) }}</b> · Profit <b class="profit">+{{ fmt.money(o.returned - o.staked) }}</b></p>
+          }
+          @case ('partial') {
+            <p class="hero__eyebrow">Race {{ o.raceNo }} · Returned</p>
+            <p #heroAmount class="hero__title">{{ fmt.money(amount()) }}</p>
+            <p class="hero__sub">Staked <b>{{ fmt.money(o.staked) }}</b> · Net <b>{{ fmt.money(o.returned - o.staked) }}</b></p>
+          }
+          @default {
+            <p class="hero__eyebrow">Race {{ o.raceNo }} · Result</p>
+            <h2 class="hero__title">Not this time</h2>
+            <p class="hero__sub"><b>#{{ winner()?.no }} {{ winner()?.name }}</b> won at {{ fmt.odds(winner()?.win ?? 0) }}.<br>{{ state.sport().waiting }}</p>
+          }
+        }
+      }
+    </div>
+    <div #podiumBox class="result__podium">
+      <ol class="podium">
+        @for (p of podium(); track p.h) {
+          <li class="podium__step" [class.is-mine]="p.mine">
+            <div class="podium__silk"><svg appRunnerIcon [no]="p.h" [sport]="sport()"></svg>@if (saddles()) { <span class="saddle">{{ p.h }}</span> }</div>
+            <span class="podium__name">{{ p.name }}</span>
+            <div class="podium__block">
+              <span class="podium__place">{{ p.i + 1 }}<sup>{{ suffix[p.i] }}</sup></span>
+              <span class="podium__price">{{ p.i === 0 ? 'Win ' + fmt.odds(p.win) : '#' + p.h }}</span>
+            </div>
+          </li>
+        }
+      </ol>
+    </div>
+    <!-- Replay lives with the podium, away from the action row (no accidental taps when reaching for Rebet). -->
+    <button class="btn btn--ghost btn--sm result__replay" [hidden]="replayHidden()" (click)="flow.resultAction('replay')">
+      <svg><use href="#i-replay"/></svg><span>Replay finish</span>
+    </button>
+  </div>
+  <div #list class="result__list col-12 col-lg-auto">
+    <h3 class="result__sub">Your bets</h3>
+    <ul #bets class="result__bets">
+      @for (b of o?.bets ?? []; track b.id) {
+        <li class="rbet" [class.is-won]="b.ret > 0" [class.is-lost]="b.ret <= 0">
+          <span class="rbet__type">{{ title(b) }}<em>{{ b.ret > 0 ? 'Won' : 'Lost' }}</em></span>
+          <div class="rbet__sel" appBetSelection [bet]="b" [names]="names()" [sport]="sport()"></div>
+          <div class="rbet__side">
+            <span class="rbet__ret">{{ b.ret > 0 ? fmt.money(b.ret) : '—' }}</span>
+            <span class="rbet__stake">Stake {{ fmt.money(b.stake * b.combos.length) }}</span>
+          </div>
+        </li>
+      }
+    </ul>
+  </div>
+</div>
+<div #actions class="result__actions">
+  <!-- Fixed positions whatever the outcome: Next race left, Rebet bottom right. Only emphasis changes. -->
+  <div class="result__row row g-2">
+    <div class="col-6">
+      <button class="btn btn--xl" [class.btn--ghost]="kind() === 'win'" [class.btn--primary]="kind() !== 'win'" (click)="flow.resultAction('next')">
+        <span>Next race</span><small>New field · race {{ (o?.raceNo ?? 0) + 1 }}</small>
+      </button>
+    </div>
+    <div class="col-6">
+      <button class="btn btn--xl" [class.btn--gold]="kind() === 'win'" [class.btn--ghost]="kind() !== 'win'"
+        [disabled]="!flow.result()?.canRebet" (click)="flow.resultAction('rebet')">
+        <span>Rebet</span><small>{{ fmt.money(rebetCost()) }} · same picks</small>
+      </button>
+    </div>
+  </div>
+</div>

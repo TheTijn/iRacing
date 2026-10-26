@@ -1,0 +1,87 @@
+<!-- Phones: video, rail and running order above the live bets. lg: video column | side panel. -->
+<div class="row g-0 flex-column flex-lg-row flex-nowrap flex-grow-1 min-h-0 column-gap-lg-5">
+  <div class="race-main col-12 col-lg d-flex flex-column align-items-lg-center min-w-0">
+    <div class="stage" [class.is-collapsed]="engine.collapsed()">
+      <video #video muted playsinline webkit-playsinline preload="auto" disablepictureinpicture disableremoteplayback></video>
+      <div class="stage__shade" aria-hidden="true"></div>
+      <div class="stage__top d-flex align-items-center gap-3">
+        <span class="live-pill"><span class="live-pill__dot"></span>Live</span>
+        <span class="stage__race">{{ engine.stageRace() }}</span>
+        <button class="icon-btn icon-btn--glass" [attr.aria-pressed]="engine.saverOn()"
+          [attr.aria-label]="engine.saverOn() ? 'Show video' : 'Hide video (data saver)'" (click)="engine.toggleSaver()">
+          <svg><use [attr.href]="engine.saverOn() ? '#i-eye-off' : '#i-eye'"/></svg>
+        </button>
+      </div>
+      <div class="callout" [class.is-on]="engine.calloutOn()" [class.is-mine]="engine.callout()?.mine" aria-hidden="true">
+        @if (engine.callout(); as c) {
+          <svg appRunnerIcon [no]="c.no"></svg><span><b>#{{ c.no }} {{ name(c.no) }}</b> {{ c.text }}</span>
+        }
+      </div>
+      <div class="stage__loader" [class.is-on]="engine.loading()"><span></span><em>{{ state.sport().loading }}</em></div>
+    </div>
+
+    <div class="rail">
+      <div class="rail__row d-flex align-items-baseline justify-content-between gap-3">
+        <span class="rail__togo"><b>{{ engine.distToGo() }}</b>m to go</span>
+        <span class="rail__lead">
+          @if (engine.railLead(); as l) { {{ l.label }} <b>#{{ l.no }} {{ name(l.no) }}</b> }
+        </span>
+      </div>
+      <div class="rail__track">
+        <span class="rail__fill" [style.transform]="'scaleX(' + engine.progress() + ')'"></span><svg class="rail__flag"><use href="#i-flag"/></svg>
+      </div>
+    </div>
+
+    <div class="order" aria-label="Running order" [style.--n]="horses().length">
+      <div class="order__slots" aria-hidden="true">
+        @for (h of horses(); track $index; let i = $index) {
+          @if (i < 3) { <span class="is-top">{{ i + 1 }}<sup>{{ suffix[i] }}</sup></span> } @else { <span>{{ i + 1 }}</span> }
+        }
+      </div>
+      <div class="order__chips">
+        @for (c of chips(); track c.key) {
+          <div class="ochip" [class.is-mine]="engine.mine().has(c.h)" [class.is-lead]="pos(c.h) === 0"
+            [style.transform]="'translateX(' + pos(c.h) * 100 + '%)'">
+            <span class="ochip__silk"><svg appRunnerIcon [no]="c.h"></svg></span>
+            @if (saddles()) { <span class="saddle">{{ c.h }}</span> }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="race-side col col-lg-auto d-flex flex-column min-h-0">
+    <div class="live d-flex flex-column flex-grow-1 min-h-0">
+      <div class="live__head d-flex align-items-baseline justify-content-between gap-3">
+        <h2 class="live__title">Your bets</h2>
+        <p class="live__now">
+          @let now = engine.liveNow();
+          @if (now.count) {
+            @if (now.total > 0) { {{ now.winning }}/{{ now.count }} winning · <b>{{ fmt.money(now.total) }}</b> if it ended now }
+            @else { Nothing landing yet }
+          }
+        </p>
+      </div>
+      <ul class="live__list">
+        @for (lb of engine.liveBets(); track lb.bet.id) {
+          <li class="lbet" [class.is-winning]="lb.state === 'winning'" [class.is-close]="lb.state === 'close'" [class.is-out]="lb.state === 'out'">
+            <span class="lbet__type">{{ lb.title }}{{ lb.name }}</span>
+            <div class="lbet__sel">
+              @if (lb.layout.side) { <span class="sel-side">{{ lb.layout.side }}</span> }
+              @for (h of lb.layout.horses; track h; let first = $first) {
+                @if (!first && lb.layout.sep) { <span class="sep">{{ lb.layout.sep }}</span> }
+                <span class="lbet__horse"><svg appRunnerIcon [no]="h"></svg><b>#{{ h }}</b><span class="lbet__pos">{{ fmt.ordinal(pos(h) + 1) }}</span></span>
+              }
+            </div>
+            <div class="lbet__side"><span class="lbet__state">{{ lb.stateText }}</span><span class="lbet__ret">{{ lb.ret > 0 ? fmt.money(lb.ret) : '' }}</span></div>
+          </li>
+        }
+      </ul>
+    </div>
+    <p class="sr-only" aria-live="polite">{{ engine.announce() }}</p>
+
+    <div class="race-actions">
+      <button class="btn btn--ghost btn--xl" id="btnSkip" (click)="engine.skipPressed()"><span>Skip to results</span><svg><use href="#i-skip"/></svg></button>
+    </div>
+  </div>
+</div>

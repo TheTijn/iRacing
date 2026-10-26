@@ -1,0 +1,23 @@
+<div class="sheet__head">
+  <h2 id="historyTitle">My bets</h2>
+  <button #close class="icon-btn" aria-label="Close" (click)="ui.closeSheet()"><svg><use href="#i-close"/></svg></button>
+</div>
+<div class="sheet__body">
+  <ul class="history">
+    @for (h of entries(); track h.at) {
+      <li class="history__race"><span>{{ heading(h) }}</span><span>1-2-3: {{ h.podium.join('-') }}</span></li>
+      @for (b of h.bets; track b.id) {
+        <li class="rbet" [class.is-won]="b.ret > 0" [class.is-lost]="b.ret <= 0">
+          <span class="rbet__type">{{ title(b, h.sport) }}<em>{{ b.id }}</em></span>
+          <div class="rbet__sel" appBetSelection [bet]="b" [names]="b.names" [sport]="h.sport"></div>
+          <div class="rbet__side">
+            <span class="rbet__ret">{{ b.ret > 0 ? fmt.money(b.ret) : '—' }}</span>
+            <span class="rbet__stake">Stake {{ fmt.money(b.stake) }}</span>
+          </div>
+        </li>
+      }
+    } @empty {
+      <li class="history__empty">No settled bets yet this session.</li>
+    }
+  </ul>
+</div>

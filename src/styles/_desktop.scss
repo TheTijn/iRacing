@@ -1,0 +1,200 @@
+@use 'tokens' as *;
+
+// Widescreen desktop (Bootstrap lg, ≥1024px): full-viewport app, docked betslip column, each phase in columns.
+//   betting  → [race hero | runners] [betslip]      (hero column from xl/1280px; above it below that)
+//   racing   → [video + distance rail] [running order · live bets · skip]
+//   result   → [hero amount + podium]  [settled bets · actions]
+// The columns themselves are Bootstrap rows/cols in the component templates (col-lg / col-lg-auto / col-xl-5, column-gap-*-5
+// = $gutter); this file sizes the fixed columns and styles the panels. Phones, landscape phones and the tablet
+// shell are untouched (see _responsive.scss).
+
+$edge: 24px;
+$topbar-h: 72px;
+$app-max-h: 750px;
+$app-h: min(100dvh, #{$app-max-h});   // the app's height; layout maths uses this, not the viewport
+
+@include wide {
+  .app {
+    width: min(100vw, 1680px); height: min(100vh, #{$app-max-h}); height: $app-h;
+    border-inline: 1px solid var(--line);
+    --side-w: 340px;   // race / result side panel
+    box-shadow: 0 0 120px -30px #000;
+  }
+
+  // Taller screens: the capped app floats as a framed panel over the blurred backdrop.
+  @media (min-height: $app-max-h + 1px) {
+    .app { border: 1px solid var(--line-2); border-radius: 24px; box-shadow: 0 60px 120px -40px rgba(0, 0, 0, 0.9); }
+  }
+
+  // ---------- Top bar ----------
+  .topbar { min-height: $topbar-h; padding: 12px $edge 10px; }
+  .wordmark {
+    gap: 10px;
+    &__mark { width: 40px; height: 40px; svg { width: 30px; height: 30px; } }
+    &__text { b, span { font-size: 20px; } }
+  }
+  .balance { padding: 6px 14px; margin-right: 8px; &__value { font-size: 22px; } }
+  .toast { top: calc(#{$topbar-h} + 8px); }
+
+  // ---------- Views (the flexible column; the slip column only shows while betting) ----------
+  .view { inset: 0 $gutter $edge $edge; }
+  .app:not([data-phase='betting']) .view { right: $edge; }
+
+  // ---------- Lobby: tiles side by side ----------
+  .lobby { padding: 8px 0 0; gap: 18px; }
+  .lobby__title { font-size: 44px; }
+  .lobby__grid > * { min-height: 0; }
+  .game { padding: 24px; }
+  .game__name { b { font-size: clamp(40px, 3.6vw, 56px); } span { font-size: 22px; } }
+  .game__cta { height: 46px; padding: 0 14px 0 20px; font-size: 15px; }
+
+  // ---------- Betslip: docked column ----------
+  .slip {
+    position: relative; z-index: 1; min-height: 0; width: $dock-w;
+    left: auto; right: auto; bottom: auto; margin: 0 $edge $edge 0; padding-bottom: 0;
+    display: none; overflow: hidden;
+    border: 1px solid var(--line-2); border-radius: 20px;
+    box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.8);
+    transform: none; transition: none;
+    &.is-visible { display: flex; }
+
+    &__bar { pointer-events: none; padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+    &__grip, &__chev { display: none; }
+    &__top b { font-size: 18px; }
+    &__panel { height: auto !important; flex: 1; min-height: 0; }
+    &__stake { padding: 14px 16px 6px; }
+    &__foot { flex-wrap: wrap; padding: 14px 16px 16px; border-top: 1px solid var(--line); }
+    &__ret-value { font-size: 34px; }
+    &__empty {
+      margin: auto; padding: 32px 28px; text-align: center; font-size: 14.5px; line-height: 1.5; color: var(--text-3);
+    }
+    &.is-empty {
+      .slip__empty { display: block; }
+      .slip__stake, .slip__clear, .tickets, .slip__cost { display: none; }
+    }
+  }
+  .btn--place { min-width: 150px; }
+  .stake-chips {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    .stake-input { grid-column: span 2; }
+  }
+
+  // ---------- Race card (betting) ----------
+  .card-hero { padding: 0; }
+  .card-body {
+    position: relative; margin-top: 14px;
+    border-radius: 20px; background: var(--bg-2); border: 1px solid var(--line); overflow: hidden;
+  }
+  .markets { padding: 14px 14px 0; }
+  .chips { padding: 0 14px 2px; }
+  .exotics__info { padding: 10px 18px 0; }
+  .runner {
+    min-height: 76px; padding: 10px 18px; gap: 14px;
+    @include hover { background: rgba(206, 255, 226, 0.025); }
+    &__silk { width: 52px; height: 52px; }
+    &__name { font-size: 16.5px; }
+  }
+  .odd { width: 70px; height: 52px; &__price { font-size: 17px; } }
+  .runner:first-child { border-top: 0; }
+  .runner:last-child { border-bottom: 0; }
+  .builder { left: 10px; right: 10px; bottom: 10px; }
+
+  // ---------- Live race ----------
+  .view--race { background: transparent; }
+  .race-main {
+    min-height: 0;
+    // Video + rail + running order fit the height: leave ~190px under the 16:9 stage.
+    > * { width: min(100%, calc((#{$app-h} - #{$topbar-h} - #{$edge} - 190px) * 16 / 9)); }
+  }
+  .stage { border-radius: 20px; border: 1px solid var(--line); }
+  .stage__top { padding: 14px 14px 0 16px; }
+  .callout { left: 16px; bottom: 16px; font-size: 14px; }
+  .rail { padding: 16px 4px 0; &__togo b { font-size: 30px; } }
+  .race-side {
+    width: var(--side-w);
+    border-radius: 20px; background: var(--bg-2); border: 1px solid var(--line); overflow: hidden;
+  }
+  // Running order under the rail, as on phones, with room for bigger chips.
+  .order { margin: 14px 0 0; }
+  .order__slots { height: 24px; span { font-size: 14px; } span.is-top { font-size: 20px; } }
+  .order__chips { height: 70px; }
+  .ochip { gap: 4px; &__silk { width: 44px; height: 44px; padding: 3px; border-radius: 12px; } .saddle { height: 19px; font-size: 13.5px; } }
+  .live { padding: 16px 12px 0; }
+  .race-actions { padding: 12px; border-top: 1px solid var(--line); }
+
+  // ---------- Result ----------
+  .view--result { background: transparent; }
+  .result__glow { inset: -10% calc(var(--side-w) + #{$gutter}) auto 0; height: 85%; }
+  .result__scroll { overflow: visible; padding: 0; }
+  .result__main { min-height: 0; overflow-y: auto; padding: 24px; }
+  .result__hero { padding-top: 0; }
+  .result__replay { margin: 22px auto 0; }
+  .hero__amount { font-size: clamp(96px, 8.5vw, 150px); }
+  .hero__title { font-size: clamp(64px, 5.5vw, 92px); }
+  .hero__sub { font-size: 16px; }
+  .result__podium {
+    width: 100%; margin-bottom: 0;
+    .podium { max-width: 460px; }
+    .podium__silk { width: 64px; height: 64px; }
+    .podium__step:nth-child(1) .podium__silk { width: 84px; height: 84px; }
+    .podium__step:nth-child(1) .podium__block { height: 104px; }
+    .podium__step:nth-child(2) .podium__block { height: 78px; }
+    .podium__step:nth-child(3) .podium__block { height: 60px; }
+  }
+  .result__list {
+    width: var(--side-w); min-height: 0; overflow-y: auto; padding: 18px 12px 12px;
+    border-radius: 20px 20px 0 0; background: var(--bg-2); border: 1px solid var(--line); border-bottom: 0;
+    scrollbar-width: thin;
+  }
+  // Under the bets column (outside the scroll row, so it stays put while the bets scroll).
+  .result__actions {
+    width: var(--side-w); margin-left: auto; padding: 12px;
+    border-radius: 0 0 20px 20px; border: 1px solid var(--line); background: var(--bg-2);
+  }
+
+  // ---------- Sheets → centred dialogs; replay sized to the viewport ----------
+  .sheet {
+    left: 50%; right: auto; top: 50%; bottom: auto; width: 480px; max-height: min(720px, 86%); padding-bottom: 0;
+    border-bottom: 1px solid var(--line-2); border-radius: 24px;
+    box-shadow: 0 40px 100px -20px #000;
+    opacity: 0; transform: translate(-50%, -46%) scale(0.98);
+    transition: transform 300ms $ease-out, opacity 200ms ease, visibility 0s linear 300ms;
+    &.is-open { opacity: 1; transform: translate(-50%, -50%); transition: transform 300ms $ease-out, opacity 200ms ease, visibility 0s; }
+    &--tall { height: min(720px, 86%); }
+  }
+  .replay__frame { width: min(100%, 1120px, calc((#{$app-h} - 96px) * 16 / 9)); }
+}
+
+// Wide desktop: the race hero gets its own column next to the runners.
+@include wide-xl {
+  .app { --side-w: 380px; }
+  .card-body { margin-top: 0; }
+  .race-head,
+  .view--card.is-compact .race-head {
+    height: 100%; min-height: 0; padding: 28px;
+    flex-direction: column; align-items: stretch; justify-content: flex-end; gap: 0;
+    border-radius: 20px;
+    .eyebrow { opacity: 1; max-height: 20px; }
+    .race-head__title { transform: none; margin: 10px 0 0; }
+    .race-head__no { transform: none; }
+    .race-head__no-label { opacity: 1; }
+  }
+  .race-head {
+    &__bg {
+      background-position: center 40%;
+      &::after {
+        background:
+          linear-gradient(0deg, rgba(5, 13, 9, 0.96) 0%, rgba(5, 13, 9, 0.7) 38%, rgba(5, 13, 9, 0.15) 75%),
+          linear-gradient(90deg, rgba(5, 13, 9, 0.4), transparent 70%);
+      }
+    }
+    &__title { font-size: clamp(52px, 4.6vw, 80px); overflow-wrap: anywhere; }
+    &__blurb { display: block; margin-top: 14px; max-width: 34ch; font-size: 15px; line-height: 1.5; color: var(--text-2); }
+    &__side {
+      position: absolute; top: 22px; right: 24px; padding: 10px 14px; border-radius: 14px;
+      background: rgba(5, 13, 9, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--line);
+    }
+    &__no { font-size: 40px; }
+  }
+}

@@ -7,3 +7,8 @@ Dog racing videos/*.mp4
 Dog racing videos/*.dump.json
 # Summerset Park 8-dog sources (640x360, ~27MB each) — transcoded copies live in public/assets/races/dogs/
 4x Summerset Park Greyhound examples/*.mp4
+
+# Angular build output and cache
+/dist
+/.angular/cache
+/out-tsc
