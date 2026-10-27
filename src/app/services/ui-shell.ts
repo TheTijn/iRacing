@@ -3,7 +3,7 @@ import type { Phase } from '../core/models';
 import { GameState } from './game-state';
 import { Motion, gsap } from './motion';
 
-export type SheetName = 'settings' | 'history';
+export type SheetName = 'settings' | 'history' | 'help';
 type ViewPhase = Exclude<Phase, 'loading'>;
 
 /** Shared UI chrome: toast, balance pill, sheets, the betslip height and view transitions. */

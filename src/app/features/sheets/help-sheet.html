@@ -1,0 +1,73 @@
+@let sp = state.sport();
+<div class="sheet__head">
+  <h2 id="helpTitle">How to play</h2>
+  <button #close class="icon-btn" aria-label="Close" (click)="ui.closeSheet()"><svg><use href="#i-close"/></svg></button>
+</div>
+<div class="sheet__body help">
+  <section>
+    <h3>The game</h3>
+    <p>Instant {{ sp.title.toLowerCase() }}: bet on a race of {{ runners() }} {{ sp.nouns }}, watch it, and get paid within a minute.
+      Every race is a real race video, and the result is set by the footage, not by the odds. It's play money only.</p>
+    <p>Tap the two stripes next to the logo to open the <b>lobby</b> and switch between games. Your balance and bet history carry over.</p>
+  </section>
+
+  <section>
+    <h3>A round, step by step</h3>
+    <ol>
+      <li><b>Pick your bets.</b> Tap a price on the race card to add it to the betslip.</li>
+      <li><b>Set your stake</b> on the betslip and tap <b>Place bet</b>. The stake comes off your balance straight away.</li>
+      <li><b>Watch the race.</b> The running order and your bets update live. Tap <b>Skip to results</b> to jump to the finish.</li>
+      <li><b>See the result.</b> Winnings are added to your balance. Then pick <b>Next race</b> for a new field, or <b>Rebet</b> to place the same bets again.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h3>Win &amp; Place</h3>
+    <dl>
+      <dt>Win</dt><dd>Pick the winner.</dd>
+      <dt>Place</dt><dd>Your {{ sp.noun }} finishes in the top {{ places() }}.</dd>
+    </dl>
+  </section>
+
+  <section>
+    <h3>Exotics</h3>
+    <dl>
+      @for (e of exotics(); track e.label) { <dt>{{ e.label }}</dt><dd>{{ e.hint }}.</dd> }
+    </dl>
+    <p>Turn on the any-order switch to play the {{ boxed() }}. This covers every order of your picks, so each order is a separate bet at your stake.</p>
+  </section>
+
+  <section>
+    <h3>Head to Head</h3>
+    <dl>
+      <dt>Head to Head</dt><dd>Which of two {{ sp.nouns }} finishes ahead of the other. The rest of the field doesn't matter.</dd>
+      <dt>Odd/Even</dt><dd>Whether the winner's {{ sp.number }} number is odd or even.</dd>
+      <dt>High/Low</dt><dd>Whether the winner's {{ sp.number }} number is in the low or high half of the field.</dd>
+    </dl>
+  </section>
+
+  <section>
+    <h3>Odds and returns</h3>
+    <ul>
+      <li>The odds are fixed when you add a bet. A winning bet returns <b>stake × odds</b>, which includes your stake.</li>
+      <li>On bets that cover several combinations, the stake is per combination. The betslip shows the total cost and the maximum return.</li>
+      <li>Each race has a new field and new odds. The favourite changes from race to race.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h3>During the race</h3>
+    <p>Under <b>Your bets</b>, each bet shows <b>Winning</b> if it would pay out if the race ended now, <b>In reach</b> if a small change in the order would make it pay, or <b>Behind</b>. Winning bets are listed first.</p>
+  </section>
+
+  <section>
+    <h3>Settings and more</h3>
+    <ul>
+      <li><b>Settings</b>: odds format (decimal, fractional or American), currency, <b>Instant results</b> (skip the video), <b>Data saver</b> (live tracker without video) and resetting the demo balance.</li>
+      <li><b>My bets</b>: every race and bet from this session.</li>
+      <li>The timer at the top shows how long you've been playing this session.</li>
+    </ul>
+  </section>
+
+  <p class="help__note">Play money only: no real funds are won or lost. If you're betting for real elsewhere, set limits and take breaks.</p>
+</div>

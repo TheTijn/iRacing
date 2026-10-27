@@ -8,6 +8,7 @@ import { Lobby } from './features/lobby/lobby';
 import { RaceCard } from './features/race-card/race-card';
 import { Replay } from './features/replay/replay';
 import { Result } from './features/result/result';
+import { HelpSheet } from './features/sheets/help-sheet';
 import { HistorySheet } from './features/sheets/history-sheet';
 import { SettingsSheet } from './features/sheets/settings-sheet';
 import { Topbar } from './features/topbar/topbar';
@@ -25,7 +26,7 @@ import { UiShell } from './services/ui-shell';
 @Component({
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Topbar, Lobby, RaceCard, LiveRace, Result, Betslip, SettingsSheet, HistorySheet, Replay],
+  imports: [Topbar, Lobby, RaceCard, LiveRace, Result, Betslip, SettingsSheet, HistorySheet, HelpSheet, Replay],
   host: {
     id: 'app',
     class: 'app d-flex flex-column',

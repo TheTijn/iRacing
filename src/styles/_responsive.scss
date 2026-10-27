@@ -14,6 +14,11 @@
 @media (max-width: 339px) {
   .wordmark__text { display: none; }
 }
+// Narrow phones: three icon buttons next to the balance; tighten them so the top bar fits on one line.
+@media (max-width: 399px) {
+  .topbar .icon-btn { width: 36px; }
+  .session-timer { right: 12px; }
+}
 @media (max-width: 359px) { .game__icon { display: none; } }
 @media (max-width: 359px) {
   .odd { width: 56px; }

@@ -5,10 +5,11 @@ import type { Currency, HistoryEntry, Settings } from '../core/models';
 const KEY_SETTINGS = 'ir_settings';
 const KEY_BALANCE = 'ir_balance';
 const KEY_HISTORY = 'ir_history';
+const KEY_SESSION = 'ir_session';
 
 /**
  * Persistence for per-viewer conveniences only (this is a play-money demo): settings and the demo balance
- * in localStorage, bet history in sessionStorage. Every access is wrapped: storage can be unavailable.
+ * in localStorage, bet history and the session start in sessionStorage. Every access is wrapped: storage can be unavailable.
  */
 @Injectable({ providedIn: 'root' })
 export class Persistence {
@@ -39,6 +40,15 @@ export class Persistence {
   }
   pushHistory(entry: HistoryEntry): void {
     this.write(() => sessionStorage, KEY_HISTORY, [entry, ...this.loadHistory()].slice(0, CONFIG.historyLimit));
+  }
+
+  /** When this browser session started (ms epoch): kept across reloads, like the history. */
+  sessionStart(): number {
+    const start = Number(this.read(() => sessionStorage, KEY_SESSION, NaN));
+    if (Number.isFinite(start) && start <= Date.now()) return start;
+    const now = Date.now();
+    this.write(() => sessionStorage, KEY_SESSION, now);
+    return now;
   }
 }
 

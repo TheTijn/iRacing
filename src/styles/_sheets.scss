@@ -24,6 +24,18 @@
     small { font-size: 11px; color: var(--text-3); font-weight: 600; @include num; }
     &.is-on { background: var(--text); color: var(--bg); border-color: var(--text); small { color: rgba(5, 13, 9, 0.6); } } }
 }
+.help {
+  section { padding: 14px 0; border-bottom: 1px solid var(--line); }
+  h3 { @include label(10px); margin-bottom: 8px; }
+  p, li, dd { font-size: 14px; line-height: 1.5; color: var(--text-2); }
+  p + p { margin-top: 8px; }
+  b, dt { color: var(--text); font-weight: 650; }
+  ol, ul { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+  dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0 0 8px; }
+  dt { font-size: 14px; line-height: 1.5; }
+  dd { margin: 0; }
+  & &__note { padding-top: 14px; font-size: 12.5px; color: var(--text-3); }
+}
 .history { display: flex; flex-direction: column; gap: 6px; }
 .history__empty { padding: 40px 0; text-align: center; color: var(--text-3); }
 .history__race { @include label(10px); padding: 12px 4px 4px; display: flex; justify-content: space-between; }

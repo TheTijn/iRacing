@@ -10,6 +10,8 @@ import { UiShell } from './ui-shell';
 const UI_ORDER_MS = 250;
 const CALLOUT_GAP_MS = 2400;
 const STATE_TXT: Record<LiveState, string> = { winning: 'Winning', close: 'In reach', out: 'Behind' };
+/** Live bets list order: winning first, then in reach, then behind (placement order within each). */
+const STATE_RANK: Record<LiveState, number> = { winning: 0, close: 1, out: 2 };
 
 interface Clock { mode: 'video' | 'timer'; now(): number }
 
@@ -113,7 +115,7 @@ export class RaceEngine {
         stateText: final ? (s === 'winning' ? 'Won' : 'Lost') : STATE_TXT[s],
         ret,
       };
-    });
+    }).sort((a, b) => STATE_RANK[a.state] - STATE_RANK[b.state]);
   });
 
   /** 'n/m winning · €x if it ended now' line above the live bets. */

@@ -62,9 +62,9 @@
           }
         </p>
       </div>
-      <ul class="live__list">
+      <ul class="live__list" #betList>
         @for (lb of engine.liveBets(); track lb.bet.id) {
-          <li class="lbet" [class.is-winning]="lb.state === 'winning'" [class.is-close]="lb.state === 'close'" [class.is-out]="lb.state === 'out'">
+          <li class="lbet" [attr.data-id]="lb.bet.id" [class.is-winning]="lb.state === 'winning'" [class.is-close]="lb.state === 'close'" [class.is-out]="lb.state === 'out'">
             <span class="lbet__type">{{ lb.title }}{{ lb.name }}</span>
             <div class="lbet__sel">
               @if (lb.layout.side) { <span class="sel-side">{{ lb.layout.side }}</span> }

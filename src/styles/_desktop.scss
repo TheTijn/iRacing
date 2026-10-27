@@ -9,7 +9,7 @@
 // shell are untouched (see _responsive.scss).
 
 $edge: 24px;
-$topbar-h: 72px;
+$topbar-h: 74px;
 $app-max-h: 750px;
 $app-h: min(100dvh, #{$app-max-h});   // the app's height; layout maths uses this, not the viewport
 
@@ -27,7 +27,8 @@ $app-h: min(100dvh, #{$app-max-h});   // the app's height; layout maths uses thi
   }
 
   // ---------- Top bar ----------
-  .topbar { min-height: $topbar-h; padding: 12px $edge 10px; }
+  .topbar { min-height: $topbar-h; padding: 22px $edge 8px; }   // 22px top: room for the session timer
+  .session-timer { top: 0; right: $edge + 4px; padding: 3px 8px; font-size: 12px; }
   .wordmark {
     gap: 10px;
     &__mark { width: 40px; height: 40px; svg { width: 30px; height: 30px; } }

@@ -1,3 +1,6 @@
+<div class="session-timer d-flex align-items-center gap-1" role="timer" aria-label="Session time">
+  <span>{{ sessionTime() }}</span><svg aria-hidden="true"><use href="#i-timer"/></svg>
+</div>
 <div class="wordmark d-flex align-items-center gap-2">
   <button class="wordmark__mark" aria-label="Lobby: all games" (click)="flow.openLobby()">
     <svg viewBox="0 0 32 32"><path d="M4 26 L14 6 h6 L10 26z" fill="currentColor"/><path d="M15 26 L25 6 h3 L18 26z" fill="currentColor" opacity=".45"/></svg>
@@ -9,6 +12,7 @@
     <span class="balance__label">Balance</span>
     <span class="balance__value">{{ ui.shownBalance() == null ? '—' : fmt.money(ui.shownBalance()!) }}</span>
   </div>
+  <button class="icon-btn" aria-label="How to play" (click)="ui.openSheet('help')"><svg><use href="#i-help"/></svg></button>
   <button class="icon-btn" aria-label="My bets" (click)="ui.openSheet('history')"><svg><use href="#i-receipt"/></svg></button>
   <button class="icon-btn" aria-label="Settings" (click)="ui.openSheet('settings')"><svg><use href="#i-sliders"/></svg></button>
 </div>
