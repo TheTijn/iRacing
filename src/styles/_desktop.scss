@@ -175,8 +175,6 @@ $app-h: min(100dvh, #{$app-max-h});   // the app's height; layout maths uses thi
     border-radius: 20px;
     .eyebrow { opacity: 1; max-height: 20px; }
     .race-head__title { transform: none; margin: 10px 0 0; }
-    .race-head__no { transform: none; }
-    .race-head__no-label { opacity: 1; }
   }
   .race-head {
     &__bg {
@@ -189,11 +187,5 @@ $app-h: min(100dvh, #{$app-max-h});   // the app's height; layout maths uses thi
     }
     &__title { font-size: clamp(52px, 4.6vw, 80px); overflow-wrap: anywhere; }
     &__blurb { display: block; margin-top: 14px; max-width: 34ch; font-size: 15px; line-height: 1.5; color: var(--text-2); }
-    &__side {
-      position: absolute; top: 22px; right: 24px; padding: 10px 14px; border-radius: 14px;
-      background: rgba(5, 13, 9, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-      border: 1px solid var(--line);
-    }
-    &__no { font-size: 40px; }
   }
 }

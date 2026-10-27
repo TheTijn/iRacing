@@ -22,7 +22,7 @@
   <ul class="tickets">
     @for (b of store.bets(); track b.id) {
       <li class="ticket">
-        <span class="ticket__type">{{ store.title(b) }}<em>{{ b.id }}</em></span>
+        <span class="ticket__type">{{ store.title(b) }}</span>
         <div class="ticket__price">
           <span class="ticket__odds">{{ b.combos.length === 1 ? fmt.odds(b.combos[0].price) : b.combos.length + ' combos' }}</span>
           @if (b.combos.length > 1) { <span class="ticket__combos">{{ fmt.money(b.stake) }} per combo</span> }

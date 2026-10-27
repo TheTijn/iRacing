@@ -19,18 +19,12 @@
     }
   }
   &__title { @include display(40px, 900, 0.005em); margin-top: 6px; transform-origin: 0 100%; transition: transform 320ms $ease-out, margin 320ms $ease-out; }
-  &__no { transform-origin: 100% 100%; transition: transform 320ms $ease-out; }
   .eyebrow { transition: opacity 200ms ease, max-height 320ms $ease-out; max-height: 20px; overflow: hidden; }
   .view--card.is-compact & {
     min-height: 54px; padding-top: 8px; padding-bottom: 8px;
     .eyebrow { opacity: 0; max-height: 0; }
     .race-head__title { transform: scale(0.66); margin-top: -8px; margin-bottom: -6px; }
-    .race-head__no { transform: scale(0.75); }
-    .race-head__no-label { opacity: 0; }
   }
-  &__side { text-align: right; }
-  &__no-label { @include label(10px); color: var(--text-2); }
-  &__no { @include display(30px, 700, 0.02em); @include num; color: var(--accent); }
 }
 .eyebrow {
   display: flex; align-items: center; gap: 8px; @include label(11px); color: var(--text-2);

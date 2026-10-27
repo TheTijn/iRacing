@@ -80,7 +80,7 @@
   flex: none; position: relative; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center;
   padding: 12px 8px 12px 14px; border-radius: 16px; background: rgba(5, 13, 9, 0.5); border: 1px solid var(--line);
 
-  &__type { @include label(10px); color: var(--accent); display: flex; gap: 8px; align-items: center; em { font-style: normal; color: var(--text-3); letter-spacing: 0.04em; } }
+  &__type { @include label(10px); color: var(--accent); display: flex; gap: 8px; align-items: center; }
   &__sel { grid-column: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-weight: 650; font-size: 14.5px; min-width: 0; }
   &__sel .sep { color: var(--text-3); font-size: 12px; }
   &__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }

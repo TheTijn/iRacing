@@ -3,16 +3,12 @@
 <!-- Phones and lg: race header above the card. xl: header column | card column. -->
 <div class="row g-0 flex-column flex-xl-row flex-nowrap flex-grow-1 min-h-0 column-gap-xl-5">
   <div class="card-hero col-12 col-xl-5">
-    <div class="race-head d-flex align-items-end justify-content-between gap-3">
+    <div class="race-head d-flex align-items-end gap-3">
       <div class="race-head__bg" aria-hidden="true" [style.background-image]="headBg()"></div>
       <div class="race-head__main min-w-0">
         <p class="eyebrow"><span class="dot"></span><span>{{ meta() }}</span></p>
         <h1 class="race-head__title">{{ venue() }}</h1>
         <p class="race-head__blurb">{{ blurb() }}</p>
-      </div>
-      <div class="race-head__side d-flex flex-column align-items-end">
-        <span class="race-head__no-label">Race</span>
-        <span class="race-head__no">{{ state.raceNo() }}</span>
       </div>
     </div>
   </div>
