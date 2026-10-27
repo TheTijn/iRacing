@@ -167,6 +167,8 @@ export class RaceCard {
 
   protected setMarket(market: Market): void { this.state.market.set(market); }
 
+  protected refreshField(): void { this.flow.refreshField(); }
+
   protected setExoticType(type: BetType): void {
     const s = this.state;
     if (type === s.exoticType()) return;

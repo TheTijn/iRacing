@@ -11,7 +11,6 @@ import { GameState } from './game-state';
 import { Motion, gsap } from './motion';
 import { Persistence } from './persistence';
 import { RaceEngine } from './race-engine';
-import { ReplayPlayer } from './replay-player';
 import { UiShell } from './ui-shell';
 
 /** What the result screen shows: kept apart from the live state, which moves on to the next race while it fades out. */
@@ -23,7 +22,7 @@ export interface ResultView {
   canRebet: boolean;
 }
 
-export type ResultAction = 'next' | 'rebet' | 'replay';
+export type ResultAction = 'next' | 'rebet';
 
 const cloneBet = (b: Bet, fresh = false): Bet => ({
   ...b,
@@ -44,7 +43,6 @@ export class GameFlow {
   private readonly ui = inject(UiShell);
   private readonly motion = inject(Motion);
   private readonly persistence = inject(Persistence);
-  private readonly replay = inject(ReplayPlayer);
   private readonly fmt = inject(Formatter);
   private readonly injector = inject(Injector);
 
@@ -230,11 +228,20 @@ export class GameFlow {
 
   resultAction(act: ResultAction): void {
     // Ignore taps while the result view is still fading in/out (prevents double rebet / double deduction)
-    if (this.state.phase() !== 'result' || (act !== 'replay' && !this.resultReady())) return;
-    if (act !== 'replay') this.motion.cancelCelebration();
+    if (this.state.phase() !== 'result' || !this.resultReady()) return;
+    this.motion.cancelCelebration();
     if (act === 'rebet') this.rebet();
-    else if (act === 'next') this.nextRace();
-    else this.replay.open(this.state.race()!);
+    else this.nextRace();
+  }
+
+  /** The race card's refresh button: a new race with fresh names and odds. Slip prices belong to the old field. */
+  refreshField(): void {
+    if (this.state.phase() !== 'betting') return;
+    const hadBets = this.slip.bets().length > 0;
+    this.slip.clear();
+    this.newRace();
+    this.cardIntro.update(n => n + 1);
+    if (hadBets) this.ui.toast('Betslip cleared for the new field');
   }
 
   // ---------- Game ----------
@@ -252,7 +259,6 @@ export class GameFlow {
     if (!gameRaces(GAMES[key], s.races()).length) { this.ui.toast(`No ${GAMES[key].venue} races available`, true); return; }
     const hadBets = this.slip.bets().length > 0;
     this.motion.cancelCelebration();
-    this.replay.close();
     this.slip.close();
     s.game.set(key);
     this.slip.clear();
@@ -273,7 +279,6 @@ export class GameFlow {
     if (phase === 'result' && !this.resultReady()) return;
     this.lobbyFrom = phase;
     this.motion.cancelCelebration();
-    this.replay.close();
     this.slip.close();
     this.ui.closeSheet();
     this.ui.showView('lobby');
@@ -286,9 +291,8 @@ export class GameFlow {
     else this.ui.showView('betting');
   }
 
-  /** Escape (when no sheet is open): close the replay, leave the lobby, or skip the race. */
+  /** Escape (when no sheet is open): leave the lobby, or skip the race. */
   escape(): void {
-    this.replay.close();
     if (this.state.phase() === 'lobby') this.pickGame(this.state.game());
     else if (this.state.phase() === 'racing') this.engine.skip();
   }

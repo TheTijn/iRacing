@@ -18,9 +18,12 @@
   </div>
 
   <div class="card-body col d-flex flex-column min-h-0">
-    <div class="markets">
+    <div class="markets d-flex align-items-center gap-2">
+      <button class="refresh flex-shrink-0" aria-label="Refresh the field" title="Refresh the field" (click)="refreshField()">
+        <svg><use href="#i-refresh"/></svg>
+      </button>
       <!-- Three equal Bootstrap columns under a sliding thumb -->
-      <div class="seg row g-0 row-cols-3" role="tablist" [attr.data-active]="state.market()">
+      <div class="seg row g-0 row-cols-3 flex-grow-1 min-w-0" role="tablist" [attr.data-active]="state.market()">
         <span class="seg__thumb" aria-hidden="true"></span>
         @for (m of markets; track m.key) {
           <button class="seg__btn col" role="tab" [class.is-active]="state.market() === m.key"

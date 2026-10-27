@@ -70,7 +70,6 @@ export class Result {
     return { no, name: v.field.runners[no].name, win: v.field.win[no] };
   });
   protected readonly rebetCost = computed(() => slipCost(this.state.lastPlaced()));
-  protected readonly replayHidden = computed(() => this.view()?.race.replayStart == null || this.state.settings().saver);
 
   protected title(b: Bet): string { return betLabel(this.sport() ?? this.state.sportKey(), b.type, b.box); }
 

@@ -45,5 +45,3 @@
   .btn { min-width: 0; flex-direction: column; gap: 2px; padding: 0 10px; }
   small { font-size: 12px; font-weight: 650; opacity: 0.7; @include num; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 }
-// Replay lives with the podium, away from the action row (no accidental taps when reaching for Rebet).
-.result__replay { display: flex; margin: -8px auto 20px; svg { width: 16px; height: 16px; } }
