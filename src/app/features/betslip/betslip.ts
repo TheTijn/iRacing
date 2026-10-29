@@ -2,9 +2,9 @@ import {
   ChangeDetectionStrategy, Component, ElementRef, Injector, afterNextRender, computed, effect, inject, untracked, viewChild,
 } from '@angular/core';
 import { CONFIG } from '../../core/config';
-import { betCost, maxReturn } from '../../core/pricing';
+import { maxReturn } from '../../core/pricing';
 import type { Bet } from '../../core/models';
-import { BetslipStore, parseStake } from '../../services/betslip-store';
+import { BetslipStore, parseStake, stepStake } from '../../services/betslip-store';
 import { Formatter } from '../../services/formatter';
 import { GameFlow } from '../../services/game-flow';
 import { GameState } from '../../services/game-state';
@@ -34,9 +34,9 @@ import { BetSelection } from '../../shared/bet-selection';
 export class Betslip {
   protected readonly store = inject(BetslipStore);
   protected readonly fmt = inject(Formatter);
-  private readonly state = inject(GameState);
+  protected readonly state = inject(GameState);
   private readonly flow = inject(GameFlow);
-  private readonly ui = inject(UiShell);
+  protected readonly ui = inject(UiShell);
   private readonly motion = inject(Motion);
   private readonly viewport = inject(Viewport);
   private readonly injector = inject(Injector);
@@ -157,6 +157,14 @@ export class Betslip {
     input.value = (v ?? bet.stake).toFixed(2);
   }
 
+  protected step(bet: Bet, dir: 1 | -1): number | null { return stepStake(bet.stake, dir); }
+
+  /** The ticket's − / + : the next stake chip down or up. */
+  protected stepTicket(bet: Bet, dir: 1 | -1): void {
+    const v = stepStake(bet.stake, dir);
+    if (v != null) this.store.setStake(bet.id!, v);
+  }
+
   protected clearAll(): void {
     this.store.clear();
     this.store.setOpen(false);
@@ -164,5 +172,4 @@ export class Betslip {
 
   protected place(): void { this.flow.placeSlip(); }
 
-  protected cost(b: Bet): number { return betCost(b); }
 }

@@ -3,7 +3,7 @@ import { formatOdds } from '../core/pricing';
 import { GameState } from './game-state';
 
 /**
- * Money and odds in the player's chosen currency / odds format. Templates call these directly; they read
+ * Money (US dollars) and odds in the player's chosen odds format. Templates call these directly; they read
  * the settings signal, so every price and amount re-renders when a setting changes.
  */
 @Injectable({ providedIn: 'root' })
@@ -12,11 +12,11 @@ export class Formatter {
   private readonly moneyFmt = new Map<string, Intl.NumberFormat>();
 
   money(x: number, { compact = false } = {}): string {
-    const cur = this.state.settings().currency || 'EUR';
+    const cur = this.state.settings().currency || 'USD';
     const key = cur + compact;
     let fmt = this.moneyFmt.get(key);
     if (!fmt) {
-      fmt = new Intl.NumberFormat(navigator.language || 'en-US', {
+      fmt = new Intl.NumberFormat('en-US', {   // '$1,000.00' whatever the browser's language
         style: 'currency', currency: cur,
         minimumFractionDigits: compact ? 0 : 2, maximumFractionDigits: 2,
       });

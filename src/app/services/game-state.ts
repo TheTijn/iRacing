@@ -20,8 +20,7 @@ export class GameState {
   readonly field = signal<Field | null>(null);
   readonly market = signal<Market>('wp');
   readonly exoticType = signal<BetType>('EXACTA');
-  readonly box = signal(false);
-  /** Exotic picks by position (legs[0] only for box / any-order). */
+  /** Exotic picks by position (legs[0] only for any-order markets). */
   readonly legs = signal<number[][]>([[], [], []]);
   /** Default stake per bet / per combination. */
   readonly stake = signal<number>(CONFIG.defaultStake);
@@ -31,7 +30,7 @@ export class GameState {
   readonly lastPlaced = signal<Bet[]>([]);
   readonly outcome = signal<Outcome | null>(null);
   readonly balance = signal(0);
-  readonly settings = signal<Settings>({ odds: 'decimal', currency: 'EUR', instant: false, saver: false });
+  readonly settings = signal<Settings>({ odds: 'decimal', currency: 'USD', instant: false, saver: false, autoPlay: true });
 
   /** The game being played (venue + field size). */
   readonly gameInfo = computed(() => GAMES[this.game()]);

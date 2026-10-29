@@ -100,6 +100,8 @@ export interface Settings {
   currency: Currency;
   instant: boolean;
   saver: boolean;
+  /** Shows the Auto button next to Place bet. */
+  autoPlay: boolean;
 }
 
 export interface SettledBet extends Bet {

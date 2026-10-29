@@ -4,7 +4,6 @@ import { betLabel } from '../core/sports';
 import type { Bet, LiveState, Race } from '../core/models';
 import { GameState } from './game-state';
 import { Motion } from './motion';
-import { Persistence } from './persistence';
 import { UiShell } from './ui-shell';
 
 const UI_ORDER_MS = 250;
@@ -61,7 +60,6 @@ export interface LiveBet {
 export class RaceEngine {
   private readonly state = inject(GameState);
   private readonly motion = inject(Motion);
-  private readonly persistence = inject(Persistence);
   private readonly ui = inject(UiShell);
 
   private video: HTMLVideoElement | null = null;
@@ -85,8 +83,6 @@ export class RaceEngine {
   readonly loading = signal(false);
   /** Stage collapsed to the tracker (data saver, or the video failed). */
   readonly collapsed = signal(false);
-  /** The data saver button's state. */
-  readonly saverOn = signal(false);
 
   /** Runners carrying the player's bets. */
   readonly mine = computed(() => {
@@ -116,13 +112,6 @@ export class RaceEngine {
         ret,
       };
     }).sort((a, b) => STATE_RANK[a.state] - STATE_RANK[b.state]);
-  });
-
-  /** 'n/m winning · €x if it ended now' line above the live bets. */
-  readonly liveNow = computed(() => {
-    const bets = this.liveBets();
-    const total = bets.reduce((s, b) => s + b.ret, 0);
-    return { count: bets.length, winning: bets.filter(b => b.state === 'winning').length, total };
   });
 
   attachVideo(video: HTMLVideoElement): void {
@@ -277,10 +266,9 @@ export class RaceEngine {
 
   private setSaverUI(on: boolean): void {
     this.collapsed.set(on);
-    this.saverOn.set(on);
   }
 
-  /** Switch the running race between video and tracker-only. Safe to call from a tap or from Settings. */
+  /** Switch the running race between video and tracker-only (the Data saver setting). */
   setSaver(on: boolean): void {
     const run = this.run;
     if (!run || run.done) return;
@@ -306,16 +294,6 @@ export class RaceEngine {
   }
   private detachResume(): void {
     if (this.run?.resume) { this.video!.removeEventListener('loadedmetadata', this.run.resume); this.run.resume = null; }
-  }
-
-  /** The stage's eye button: hide / show the video mid-race (and remember it as the data saver setting). */
-  toggleSaver(): void {
-    const run = this.run;
-    if (!run || run.done) return;
-    const saver = run.clock!.mode === 'video';
-    this.state.settings.update(s => ({ ...s, saver }));
-    this.persistence.saveSettings(this.state.settings());
-    this.setSaver(saver);
   }
 
   // Watchdog: iOS pauses video in the background; networks stall. Resume, or fall back to the tracker.

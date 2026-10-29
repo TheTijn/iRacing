@@ -32,7 +32,7 @@
             <span class="podium__name">{{ p.name }}</span>
             <div class="podium__block">
               <span class="podium__place">{{ p.i + 1 }}<sup>{{ suffix[p.i] }}</sup></span>
-              <span class="podium__price">{{ p.i === 0 ? 'Win ' + fmt.odds(p.win) : '#' + p.h }}</span>
+              <span class="podium__price">#{{ p.h }}</span>
             </div>
           </li>
         }
@@ -56,7 +56,11 @@
   </div>
 </div>
 <div #actions class="result__actions">
-  <!-- Fixed positions whatever the outcome: Next race left, Rebet bottom right. Only emphasis changes. -->
+  <!-- Fixed positions whatever the outcome: Next race left, Rebet bottom right. Only emphasis changes.
+       While auto play runs, its progress and Stop take their place. -->
+  @if (auto.active()) {
+    <div app-auto-status></div>
+  } @else {
   <div class="result__row row g-2">
     <div class="col-6">
       <button class="btn btn--xl" [class.btn--ghost]="kind() === 'win'" [class.btn--primary]="kind() !== 'win'" (click)="flow.resultAction('next')">
@@ -70,4 +74,5 @@
       </button>
     </div>
   </div>
+  }
 </div>

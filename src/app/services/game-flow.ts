@@ -5,6 +5,7 @@ import { GAMES, GAME_ORDER, gameRaces, isGameKey } from '../core/sports';
 import { buildField } from '../core/field';
 import { withVirtualRunners } from '../core/virtual';
 import type { Bet, ByRunner, Field, GameKey, Outcome, Race, Settings, SportKey } from '../core/models';
+import { AutoPlay, type AutoOptions } from './auto-play';
 import { BetslipStore, newId, slipCost } from './betslip-store';
 import { Formatter } from './formatter';
 import { GameState } from './game-state';
@@ -33,7 +34,8 @@ const cloneBet = (b: Bet, fresh = false): Bet => ({
 
 /**
  * The game's phase machine: boot, BETTING → RACING → RESULT → (Rebet | Next race), plus the lobby between
- * races. Picks each race's video (shuffle bag per game), places and settles bets, switches games.
+ * races. Picks each race's video (shuffle bag per game), places and settles bets, switches games, and runs
+ * auto play (RESULT → RACING again with the same bets until a limit or Stop).
  */
 @Injectable({ providedIn: 'root' })
 export class GameFlow {
@@ -45,6 +47,7 @@ export class GameFlow {
   private readonly persistence = inject(Persistence);
   private readonly fmt = inject(Formatter);
   private readonly injector = inject(Injector);
+  private readonly auto = inject(AutoPlay);
 
   private readonly params = new URLSearchParams(location.search);
   private readonly forcedRace = this.params.get('race');    // debug: ?race=190 / ?race=d01 plays that video every time (and opens its game)
@@ -58,6 +61,7 @@ export class GameFlow {
   /** What the result screen shows. */
   readonly result = signal<ResultView | null>(null);
   private resultShownAt = 0;
+  private autoTimer = 0;
   private lobbyFrom: 'betting' | 'result' = 'betting';
 
   /** Result actions only accept taps once the screen has settled (guards a double tap on Skip landing on Next race). */
@@ -149,7 +153,7 @@ export class GameFlow {
     this.placeBets(bets);
   }
 
-  private placeBets(bets: Bet[]): boolean {
+  private placeBets(bets: Bet[], { instant = this.state.settings().instant } = {}): boolean {
     const s = this.state;
     const cost = slipCost(bets);
     if (!bets.length) return false;
@@ -161,7 +165,6 @@ export class GameFlow {
     s.lastPlaced.set(bets.map(b => cloneBet(b)));
     this.slip.clear();
     this.slip.close();
-    const instant = s.settings().instant;
     if (!instant) this.ui.showView('racing');
     this.engine.start({ instant, onFinish: (order, info) => this.onRaceFinish(order, info) });
     return true;
@@ -180,6 +183,7 @@ export class GameFlow {
     // Credit immediately in state (the pill animates on the result screen)
     s.balance.set(Math.round((s.balance() + returned) * 100) / 100);
     this.persistence.saveBalance(s.balance());
+    const autoStop = this.auto.record(staked, returned, s.balance());
 
     const names = (b: Bet): ByRunner<string> =>
       Object.fromEntries([...new Set(b.legs.flat())].map(h => [h, field.runners[h].name]));
@@ -199,7 +203,62 @@ export class GameFlow {
         outcome, field, race: s.race()!, mine: this.engine.mine(),
         canRebet: s.lastPlaced().length > 0,   // affordability is checked at Place bet
       });
+      if (!this.auto.active()) return;
+      if (autoStop) this.stopAuto(autoStop);
+      else this.countdownAuto();
     });
+  }
+
+  // ---------- Auto play ----------
+  /** The Auto play sheet's Start: places the slip's bets now, then again on each race until a limit or Stop. */
+  startAuto(opts: AutoOptions): void {
+    const bets = this.slip.bets();
+    if (!bets.length || this.state.phase() !== 'betting' || this.auto.active()) return;
+    const cost = slipCost(bets);
+    if (cost > this.state.balance() + 1e-9) { this.ui.toast(`Not enough balance (need ${this.fmt.money(cost)})`, true); return; }
+    this.ui.closeSheet();
+    this.auto.begin(bets.map(b => cloneBet(b)), opts);
+    this.placeBets(bets, { instant: opts.skip || this.state.settings().instant });
+  }
+
+  stopAuto(reason = 'Auto play stopped'): void {
+    if (!this.auto.active()) return;
+    clearInterval(this.autoTimer);
+    this.auto.end();
+    this.ui.toast(reason);
+  }
+
+  /** A few seconds on the result screen, then the next race. */
+  private countdownAuto(): void {
+    clearInterval(this.autoTimer);
+    this.auto.nextIn.set(CONFIG.autoGapS);
+    this.autoTimer = window.setInterval(() => {
+      const left = (this.auto.nextIn() ?? 0) - 1;
+      this.auto.nextIn.set(Math.max(0, left));
+      if (left > 0) return;
+      clearInterval(this.autoTimer);
+      this.autoNext();
+    }, 1000);
+  }
+
+  /** Next auto race: same field (so the bets' runners and prices still hold), same bets. */
+  private autoNext(): void {
+    const run = this.auto.run();
+    if (!run || this.state.phase() !== 'result') return;
+    this.auto.nextIn.set(null);
+    this.motion.cancelCelebration();
+    const oldField = this.state.field();
+    this.newRace({ keepField: true });
+    if (this.state.field() !== oldField) {
+      this.stopAuto('Auto play stopped: new field');
+      this.slip.clear();
+      this.ui.showView('betting');
+      return;
+    }
+    if (!this.placeBets(run.bets.map(b => cloneBet(b, true)), { instant: run.skip || this.state.settings().instant })) {
+      this.stopAuto('Auto play stopped: not enough balance');
+      this.ui.showView('betting');
+    }
   }
 
   /** Rebet: next race on the same field with last race's bets back on the slip. Nothing is placed (or deducted)
@@ -229,6 +288,7 @@ export class GameFlow {
   resultAction(act: ResultAction): void {
     // Ignore taps while the result view is still fading in/out (prevents double rebet / double deduction)
     if (this.state.phase() !== 'result' || !this.resultReady()) return;
+    this.stopAuto();
     this.motion.cancelCelebration();
     if (act === 'rebet') this.rebet();
     else this.nextRace();
@@ -248,7 +308,7 @@ export class GameFlow {
   /** Re-fit the card to the sport: keep the exotic type if the sport offers it. */
   private resetForSport(): void {
     const s = this.state;
-    if (!s.sport().exotics.includes(s.exoticType())) { s.exoticType.set(s.sport().exotics[0]); s.box.set(false); }
+    if (!s.sport().exotics.includes(s.exoticType())) s.exoticType.set(s.sport().exotics[0]);
     s.legs.set([[], [], []]);
   }
 
@@ -277,6 +337,7 @@ export class GameFlow {
     if (phase === 'lobby') { this.pickGame(this.state.game()); return; }
     if (phase !== 'betting' && phase !== 'result') { this.ui.toast('The lobby opens after this race'); return; }
     if (phase === 'result' && !this.resultReady()) return;
+    this.stopAuto();
     this.lobbyFrom = phase;
     this.motion.cancelCelebration();
     this.slip.close();

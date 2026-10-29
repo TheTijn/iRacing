@@ -8,7 +8,6 @@
       <div class="race-head__main min-w-0">
         <p class="eyebrow"><span class="dot"></span><span>{{ meta() }}</span></p>
         <h1 class="race-head__title">{{ venue() }}</h1>
-        <p class="race-head__blurb">{{ blurb() }}</p>
       </div>
     </div>
   </div>
@@ -36,14 +35,7 @@
         }
       </div>
       <div class="exotics__info d-flex align-items-center justify-content-between gap-3">
-        <p class="exotics__hint"><b>{{ label(state.exoticType(), boxOn()) }}</b> · {{ hint(state.exoticType(), boxOn()) }}</p>
-        <label class="switch" [hidden]="!boxable()">
-          <input type="checkbox" [checked]="state.box()" (change)="setBox($any($event.target).checked)">
-          <span class="switch__track" aria-hidden="true"><span class="switch__knob"></span></span>
-          <span class="switch__label">
-            @if (boxLabel() === 'Box') { Box <small>any order</small> } @else { {{ boxLabel() }} }
-          </span>
-        </label>
+        <p class="exotics__hint"><b>{{ label(state.exoticType()) }}</b> · {{ hint(state.exoticType()) }}</p>
       </div>
     </div>
 
@@ -133,19 +125,20 @@
       </section>
     </div>
 
-    <div class="builder d-flex align-items-center gap-3" [class.is-on]="builderOn()" aria-live="polite">
+    <div class="builder d-flex align-items-center gap-2" [class.is-on]="builderOn()" aria-live="polite">
       @if (builderView(); as b) {
         @if (b.err) {
           <div class="builder__text">
             <p class="builder__err">{{ b.err }}</p>
             <p class="builder__line">{{ b.title }} · {{ b.hint }}</p>
           </div>
-          <button class="btn btn--ghost" (click)="clearPicks()">Clear</button>
+          <button class="btn btn--ghost builder__clear" (click)="clearPicks()">Clear all</button>
         } @else {
           <div class="builder__text">
-            <p class="builder__line"><b>{{ b.title }}</b> · {{ b.combos }} × {{ fmt.money(state.stake()) }} = <b>{{ fmt.money(b.cost) }}</b></p>
+            <p class="builder__line"><b>{{ b.title }}</b> · <span class="builder__sum">{{ b.combos }} × {{ fmt.money(state.stake()) }} = <b>{{ fmt.money(b.cost) }}</b></span></p>
             <p class="builder__pays">Pays up to <b>{{ fmt.money(b.pays) }}</b></p>
           </div>
+          <button class="btn btn--ghost builder__clear" (click)="clearPicks()">Clear all</button>
           <button class="btn btn--primary" (click)="addExotic()">Add to slip</button>
         }
       }

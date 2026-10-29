@@ -186,6 +186,5 @@ $app-h: min(100dvh, #{$app-max-h});   // the app's height; layout maths uses thi
       }
     }
     &__title { font-size: clamp(52px, 4.6vw, 80px); overflow-wrap: anywhere; }
-    &__blurb { display: block; margin-top: 14px; max-width: 34ch; font-size: 15px; line-height: 1.5; color: var(--text-2); }
   }
 }

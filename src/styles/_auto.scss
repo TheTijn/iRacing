@@ -1,0 +1,56 @@
+@use 'tokens' as *;
+
+// ---------- Auto play: slip button, options sheet, progress bar ----------
+
+// Secondary to Place bet: ghost, same height, icon over label.
+.btn--auto {
+  height: 56px; width: 64px; padding: 0; border-radius: 16px; flex-direction: column; gap: 3px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.02em; color: var(--text-2);
+  svg { width: 20px; height: 20px; }
+  @include hover { color: var(--text); }
+  &:disabled { color: var(--text-3); opacity: 0.6; }
+}
+
+// Compact enough to fit a 375×667 phone without scrolling; Start sits in a foot outside the scroller.
+.sheet--auto { max-height: 94%; .sheet__head { padding-top: 10px; padding-bottom: 2px; } }
+.auto {
+  padding-bottom: 4px;
+  .field { padding: 11px 0; }
+  .field:last-child { border-bottom: 0; }
+  .pills button { height: 42px; }
+  &__label { margin-bottom: 10px; .field__label { margin-bottom: 0; } }
+  &__value { @include display(26px, 800, 0.01em); @include num; flex: none; }
+  &__risk { font-size: 12.5px; color: var(--text-2); white-space: nowrap; @include num; b { color: var(--text); font-weight: 700; } }
+  &__foot { flex: none; padding: 10px 16px 14px; border-top: 1px solid var(--line); }
+  &__start { flex-direction: column; gap: 2px;
+    small { font-size: 12px; font-weight: 650; opacity: 0.72; @include num; } }
+}
+
+.stepper {
+  display: flex; align-items: center; flex: none; height: 44px;
+  border-radius: 12px; background: var(--surface); border: 1px solid var(--line-2); overflow: hidden;
+  &__btn {
+    display: grid; place-items: center; width: 38px; height: 100%; color: var(--text-2);
+    svg { width: 16px; height: 16px; }
+    @include hover { color: var(--text); background: var(--surface-2); }
+    &:disabled { color: var(--text-3); opacity: 0.5; }
+  }
+  &__input {
+    width: 68px; height: 100%; padding: 0 4px; text-align: center; background: none; border: 0;
+    border-left: 1px solid var(--line); border-right: 1px solid var(--line);
+    color: var(--text); font: 700 15px var(--f-ui); @include num;
+    &:focus { outline: none; background: var(--surface-2); }
+  }
+}
+
+.autobar {
+  padding: 10px 10px 10px 14px; border-radius: 16px;
+  background: var(--surface); border: 1px solid var(--line-2);
+  &__icon { width: 22px; height: 22px; color: var(--accent); }
+  &__text {
+    b { display: block; font-size: 14px; font-weight: 700; @include num; }
+    small { display: block; margin-top: 1px; font-size: 12.5px; color: var(--text-2); @include num;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .is-up { color: var(--accent); font-weight: 700; }
+  }
+}

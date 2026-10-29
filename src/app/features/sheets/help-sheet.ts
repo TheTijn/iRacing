@@ -31,11 +31,6 @@ export class HelpSheet {
     const sport = this.state.sportKey();
     return this.state.sport().exotics.map(t => ({ label: betLabel(sport, t), hint: betHint(sport, t) }));
   });
-  /** The any-order versions of Exacta / Trifecta (Reverse Forecast / Combination Tricast for dogs). */
-  protected readonly boxed = computed(() => {
-    const sport = this.state.sportKey();
-    return `${betLabel(sport, 'EXACTA', true)} and ${betLabel(sport, 'TRIFECTA', true)}`;
-  });
 
   constructor() {
     effect(() => {

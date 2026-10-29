@@ -1,23 +1,26 @@
 import { ChangeDetectionStrategy, Component, ElementRef, afterRenderEffect, computed, effect, inject, viewChild } from '@angular/core';
+import { AutoPlay } from '../../services/auto-play';
 import { Formatter, PLACE_SUFFIX } from '../../services/formatter';
 import { GameState } from '../../services/game-state';
 import { Motion, gsap } from '../../services/motion';
 import { RaceEngine } from '../../services/race-engine';
+import { AutoStatus } from '../../shared/auto-status';
 import { RunnerIcon } from '../../shared/runner-icon';
 
 /**
- * Live race: the video stage (with callouts and the data saver toggle), distance rail, running order strip,
+ * Live race: the video stage (with callouts), distance rail, running order strip,
  * the player's live bets and Skip. RaceEngine drives it all; this view renders its signals.
  */
 @Component({
   selector: 'section[app-live-race]',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RunnerIcon],
+  imports: [RunnerIcon, AutoStatus],
   host: { class: 'view view--race', 'aria-label': 'Live race' },
   templateUrl: './live-race.html',
 })
 export class LiveRace {
   protected readonly state = inject(GameState);
+  protected readonly auto = inject(AutoPlay);
   protected readonly engine = inject(RaceEngine);
   protected readonly fmt = inject(Formatter);
   private readonly motion = inject(Motion);

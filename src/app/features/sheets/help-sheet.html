@@ -34,7 +34,6 @@
     <dl>
       @for (e of exotics(); track e.label) { <dt>{{ e.label }}</dt><dd>{{ e.hint }}.</dd> }
     </dl>
-    <p>Turn on the any-order switch to play the {{ boxed() }}. This covers every order of your picks, so each order is a separate bet at your stake.</p>
   </section>
 
   <section>
@@ -63,7 +62,10 @@
   <section>
     <h3>Settings and more</h3>
     <ul>
-      <li><b>Settings</b>: odds format (decimal, fractional or American), currency, <b>Instant results</b> (skip the video), <b>Data saver</b> (live tracker without video) and resetting the demo balance.</li>
+      <li><b>Settings</b>: odds format (decimal, fractional or American), <b>Instant results</b> (skip the video), <b>Data saver</b> (live tracker without video), <b>Auto play</b> (show or hide the Auto button) and resetting the demo balance.</li>
+      @if (state.settings().autoPlay) {
+      <li><b>Auto</b> (next to Place bet): plays your slip's bets on 10 to 50 races in a row. It stops at your loss limit, after a single win of 10× the stake if you choose, when your balance runs out, or when you tap <b>Stop</b>.</li>
+      }
       <li><b>My bets</b>: every race and bet from this session.</li>
       <li>The timer at the top shows how long you've been playing this session.</li>
     </ul>

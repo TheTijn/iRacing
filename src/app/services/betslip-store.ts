@@ -29,6 +29,23 @@ export function parseStake(v: string | number): number | null {
   return Math.min(CONFIG.maxStake, Math.max(CONFIG.minStake, n));
 }
 
+/**
+ * The ticket stepper's next stake: one stake chip up or down (1, 2, 5, 10, 25, 50), then in steps of the top
+ * chip (100, 150, …) up to the max stake. A custom stake moves to the nearest chip that way. Null at either end.
+ */
+export function stepStake(stake: number, dir: 1 | -1): number | null {
+  const chips: readonly number[] = CONFIG.stakeChips;
+  const top = chips[chips.length - 1];
+  const eps = 1e-9;
+  if (dir > 0) {
+    if (stake >= CONFIG.maxStake - eps) return null;
+    const next = chips.find(c => c > stake + eps) ?? (Math.floor(stake / top + eps) + 1) * top;
+    return Math.min(CONFIG.maxStake, next);
+  }
+  if (stake > top + eps) return Math.max(top, (Math.ceil(stake / top - eps) - 1) * top);
+  return [...chips].reverse().find(c => c < stake - eps) ?? null;
+}
+
 /** The betslip: bets not yet placed, their stakes, and whether the bottom sheet is open. */
 @Injectable({ providedIn: 'root' })
 export class BetslipStore {

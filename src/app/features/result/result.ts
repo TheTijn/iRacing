@@ -3,12 +3,14 @@ import {
 } from '@angular/core';
 import type { Bet, Outcome } from '../../core/models';
 import { betLabel } from '../../core/sports';
+import { AutoPlay } from '../../services/auto-play';
 import { slipCost } from '../../services/betslip-store';
 import { Formatter, PLACE_SUFFIX } from '../../services/formatter';
 import { GameFlow } from '../../services/game-flow';
 import { GameState } from '../../services/game-state';
 import { Motion, gsap } from '../../services/motion';
 import { UiShell } from '../../services/ui-shell';
+import { AutoStatus } from '../../shared/auto-status';
 import { BetSelection } from '../../shared/bet-selection';
 import { RunnerIcon } from '../../shared/runner-icon';
 
@@ -27,12 +29,13 @@ export function outcomeKind(o: Outcome): OutcomeKind {
 @Component({
   selector: 'section[app-result]',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BetSelection, RunnerIcon],
+  imports: [BetSelection, RunnerIcon, AutoStatus],
   host: { class: 'view view--result', 'aria-label': 'Result', '[class.is-win]': "kind() === 'win'" },
   templateUrl: './result.html',
 })
 export class Result {
   protected readonly flow = inject(GameFlow);
+  protected readonly auto = inject(AutoPlay);
   protected readonly state = inject(GameState);
   protected readonly fmt = inject(Formatter);
   private readonly motion = inject(Motion);
@@ -61,7 +64,7 @@ export class Result {
     const v = this.view();
     if (!v) return [];
     const f = v.field;
-    return v.outcome.order.slice(0, 3).map((h, i) => ({ h, i, name: f.runners[h].name, win: f.win[h], mine: v.mine.has(h) }));
+    return v.outcome.order.slice(0, 3).map((h, i) => ({ h, i, name: f.runners[h].name, mine: v.mine.has(h) }));
   });
   protected readonly winner = computed(() => {
     const v = this.view();

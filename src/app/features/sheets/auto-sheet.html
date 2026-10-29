@@ -1,0 +1,44 @@
+@let n = slip.bets().length;
+<div class="sheet__head">
+  <h2 id="autoTitle">Auto play</h2>
+  <button #close class="icon-btn" aria-label="Close" (click)="ui.closeSheet()"><svg><use href="#i-close"/></svg></button>
+</div>
+<div class="sheet__body auto">
+  <div class="field field--row"><span><b>Stake per race</b><small>{{ n }} {{ n === 1 ? 'bet' : 'bets' }} from your slip, every race</small></span>
+    <span class="auto__value">{{ fmt.money(cost()) }}</span>
+  </div>
+  <div class="field">
+    <div class="auto__label d-flex align-items-baseline justify-content-between gap-3">
+      <span class="field__label">Number of races</span>
+      <span class="auto__risk">Total risk <b>{{ fmt.money(totalRisk()) }}</b></span>
+    </div>
+    <div class="pills" role="radiogroup" aria-label="Number of races">
+      @for (r of roundOptions; track r) {
+        <button role="radio" [attr.aria-checked]="rounds() === r" [class.is-on]="rounds() === r" (click)="rounds.set(r)">{{ r }}</button>
+      }
+    </div>
+  </div>
+  <div class="field field--row"><span><b>Loss limit</b><small>Stops before losses pass this</small></span>
+    <span class="stepper">
+      <button class="stepper__btn" aria-label="Lower the loss limit" [disabled]="lossLimit() <= cost()" (click)="stepLimit(-1)"><svg><use href="#i-minus"/></svg></button>
+      <input #limit class="stepper__input" type="text" inputmode="decimal" aria-label="Loss limit" [value]="lossLimit().toFixed(2)"
+        (change)="typeLimit(limit)" (keydown.enter)="limit.blur()">
+      <button class="stepper__btn" aria-label="Raise the loss limit" [disabled]="lossLimit() >= totalRisk()" (click)="stepLimit(1)"><svg><use href="#i-plus"/></svg></button>
+    </span>
+  </div>
+  <div class="field"><span class="field__label">Single win limit</span>
+    <div class="pills" role="radiogroup" aria-label="Single win limit">
+      <button role="radio" [attr.aria-checked]="winLimit()" [class.is-on]="winLimit()" (click)="winLimit.set(true)">{{ winMultiple }}× stake <small>Stop on a {{ fmt.money(cost() * winMultiple) }} win</small></button>
+      <button role="radio" [attr.aria-checked]="!winLimit()" [class.is-on]="!winLimit()" (click)="winLimit.set(false)">No limit <small>Play every race</small></button>
+    </div>
+  </div>
+  <label class="field field--row"><span><b>Skip to results</b><small>Straight to each result, no video</small></span>
+    <span class="switch"><input type="checkbox" [checked]="skip()" (change)="skip.set($any($event.target).checked)"><span class="switch__track"><span class="switch__knob"></span></span></span>
+  </label>
+</div>
+<!-- Outside the scroller: Start stays in view even when a short screen has to scroll the options. -->
+<div class="auto__foot">
+  <button class="btn btn--primary btn--xl auto__start" [disabled]="!affordable()" (click)="start()">
+    <span>Start auto play</span><small>{{ affordable() ? rounds() + ' races · ' + fmt.money(cost()) + ' each' : 'Not enough balance' }}</small>
+  </button>
+</div>

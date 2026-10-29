@@ -129,7 +129,7 @@
   &.is-on {
     background: var(--accent); border-color: var(--accent); color: var(--accent-ink);
     box-shadow: 0 8px 22px -10px var(--accent-glow);
-    .odd__tag { color: rgba(2, 21, 10, 0.6); }
+    .odd__tag { color: rgba(2, 21, 10, 0.75); }
   }
   &--place { width: 62px; }
 }
@@ -161,10 +161,9 @@
 
   &__text { flex: 1; min-width: 0; }
   &__line { font-size: 13px; color: var(--text-2); @include num; b { color: var(--text); font-weight: 700; } }
+  &__sum { white-space: nowrap; }
   &__pays { margin-top: 2px; font-size: 13px; color: var(--text-2); b { @include num; color: var(--gold); font-weight: 700; font-size: 15px; } }
   &__err { font-size: 13.5px; font-weight: 600; color: var(--text); }
   .btn { flex: none; height: 44px; padding: 0 16px; }
+  .btn.builder__clear { padding: 0 12px; font-size: 14px; }
 }
-
-// Desktop-only (shown by _desktop.scss at xl).
-.race-head__blurb { display: none; }

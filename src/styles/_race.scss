@@ -27,7 +27,7 @@
 
 .live-pill {
   display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 6px;
-  background: var(--red); color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+  background: #cf3a2e; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;   // deeper than --red: white text at AA
   &__dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: pulse 1.2s ease-in-out infinite; }
 }
 @keyframes pulse { 50% { opacity: 0.25; } }
@@ -92,7 +92,6 @@
   padding: 10px 12px 0;
   &__head { display: flex; padding: 0 4px 8px; }   // display stays here: the landscape HUD hides it
   &__title { @include label(11px); color: var(--text-2); }
-  &__now { font-size: 12.5px; color: var(--text-3); font-weight: 600; @include num; b { color: var(--gold); font-weight: 750; font-size: 14px; } }
   // Positioned: rows measure offsetTop against it to slide when re-sorted.
   &__list { position: relative; flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; scrollbar-width: none; }
 }
@@ -100,7 +99,7 @@
   flex: none; position: relative; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 12px;
   padding: 10px 12px 10px 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line);
   overflow: hidden;
-  transition: background-color 300ms ease, border-color 300ms ease, opacity 300ms ease;
+  transition: background-color 300ms ease, border-color 300ms ease;
   &::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--text-3); transition: background-color 300ms ease; }
   &__type { @include label(10px); }
   &__sel { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-weight: 650; font-size: 14px; min-width: 0; }
@@ -120,7 +119,12 @@
     &::before { background: var(--amber); }
     .lbet__state { background: rgba(255, 181, 71, 0.16); color: var(--amber); }
   }
-  &.is-out { opacity: 0.62; }
+  // Behind: quieter than Winning / In reach through a darker card, not opacity, so it stays readable in sunlight.
+  &.is-out {
+    background: var(--bg-2);
+    .lbet__sel { color: var(--text-2); }
+    .lbet__state { background: var(--surface-2); color: var(--text-2); }
+  }
 }
 
 .race-actions { flex: none; padding: 8px 12px calc(12px + var(--safe-b)); }

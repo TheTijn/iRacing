@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { CONFIG } from '../core/config';
-import type { Currency, HistoryEntry, Settings } from '../core/models';
+import type { HistoryEntry, Settings } from '../core/models';
 
 const KEY_SETTINGS = 'ir_settings';
 const KEY_BALANCE = 'ir_balance';
@@ -23,7 +23,8 @@ export class Persistence {
   loadSettings(): Settings {
     const saved = this.read<Partial<Settings> & { sport?: unknown }>(() => localStorage, KEY_SETTINGS, {});
     delete saved.sport;   // left over from the old Horses/Dogs toggle; the sport is no longer saved
-    return { odds: 'decimal', currency: guessCurrency(), instant: false, saver: false, ...saved };
+    // Always US dollars: there is no currency setting, so an older saved choice is overridden.
+    return { odds: 'decimal', instant: false, saver: false, autoPlay: true, ...saved, currency: 'USD' };
   }
   saveSettings(settings: Settings): void { this.write(() => localStorage, KEY_SETTINGS, settings); }
 
@@ -50,11 +51,4 @@ export class Persistence {
     this.write(() => sessionStorage, KEY_SESSION, now);
     return now;
   }
-}
-
-function guessCurrency(): Currency {
-  const lang = navigator.language || 'en-US';
-  if (/^en-(US|CA)|-US$/.test(lang)) return 'USD';
-  if (/^en-GB|-GB$/.test(lang)) return 'GBP';
-  return 'EUR';
 }

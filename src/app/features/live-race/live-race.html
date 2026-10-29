@@ -7,10 +7,6 @@
       <div class="stage__top d-flex align-items-center gap-3">
         <span class="live-pill"><span class="live-pill__dot"></span>Live</span>
         <span class="stage__race">{{ engine.stageRace() }}</span>
-        <button class="icon-btn icon-btn--glass" [attr.aria-pressed]="engine.saverOn()"
-          [attr.aria-label]="engine.saverOn() ? 'Show video' : 'Hide video (data saver)'" (click)="engine.toggleSaver()">
-          <svg><use [attr.href]="engine.saverOn() ? '#i-eye-off' : '#i-eye'"/></svg>
-        </button>
       </div>
       <div class="callout" [class.is-on]="engine.calloutOn()" [class.is-mine]="engine.callout()?.mine" aria-hidden="true">
         @if (engine.callout(); as c) {
@@ -54,13 +50,6 @@
     <div class="live d-flex flex-column flex-grow-1 min-h-0">
       <div class="live__head d-flex align-items-baseline justify-content-between gap-3">
         <h2 class="live__title">Your bets</h2>
-        <p class="live__now">
-          @let now = engine.liveNow();
-          @if (now.count) {
-            @if (now.total > 0) { {{ now.winning }}/{{ now.count }} winning · <b>{{ fmt.money(now.total) }}</b> if it ended now }
-            @else { Nothing landing yet }
-          }
-        </p>
       </div>
       <ul class="live__list" #betList>
         @for (lb of engine.liveBets(); track lb.bet.id) {
@@ -80,7 +69,8 @@
     </div>
     <p class="sr-only" aria-live="polite">{{ engine.announce() }}</p>
 
-    <div class="race-actions">
+    <div class="race-actions d-flex flex-column gap-2">
+      @if (auto.active()) { <div app-auto-status></div> }
       <button class="btn btn--ghost btn--xl" id="btnSkip" (click)="engine.skipPressed()"><span>Skip to results</span><svg><use href="#i-skip"/></svg></button>
     </div>
   </div>

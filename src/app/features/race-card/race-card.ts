@@ -4,7 +4,7 @@ import {
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { BET_TYPES, SET_SIDES, betCost, betMaxReturn, buildBet, h2hPairs, pickError } from '../../core/pricing';
-import { betHint, betLabel, boxToggleLabel } from '../../core/sports';
+import { betHint, betLabel } from '../../core/sports';
 import type { Bet, BetType, Market, SetSide } from '../../core/models';
 import { BetslipStore, betKey } from '../../services/betslip-store';
 import { Formatter } from '../../services/formatter';
@@ -68,10 +68,6 @@ export class RaceCard {
     const r = this.state.race();
     return r ? `${r.distance}m · ${this.state.sport().surface} · ${r.runners} runners` : '';
   });
-  protected readonly blurb = computed(() => {
-    const r = this.state.race(), s = this.state.sport();
-    return r ? `${s.title} · ${r.runners} ${s.nouns} over ${r.distance}m. Place your bets — the race goes off the moment you do.` : '';
-  });
   protected readonly headBg = computed(() => {
     const r = this.state.race();
     return r ? `url(${r.thumb || r.poster})` : null;
@@ -80,15 +76,12 @@ export class RaceCard {
   protected readonly saddles = computed(() => this.state.sport().icon === 'silk');
 
   // ---------- Exotics ----------
-  protected readonly orderedGrid = computed(() => BET_TYPES[this.state.exoticType()].ordered && !this.state.box());
+  protected readonly orderedGrid = computed(() => BET_TYPES[this.state.exoticType()].ordered);
   protected readonly positions = computed(() => POS.slice(0, BET_TYPES[this.state.exoticType()].size));
-  protected readonly boxable = computed(() => !!BET_TYPES[this.state.exoticType()].boxable);
-  protected readonly boxOn = computed(() => this.state.box() && this.boxable());
-  protected readonly boxLabel = computed(() => boxToggleLabel(this.state.sportKey(), this.state.exoticType()));
 
-  protected label(type: BetType, box = false): string { return betLabel(this.state.sportKey(), type, box); }
-  protected hint(type: BetType, box = false): string {
-    return betHint(this.state.sportKey(), type, { box, places: this.state.field()?.places });
+  protected label(type: BetType): string { return betLabel(this.state.sportKey(), type); }
+  protected hint(type: BetType): string {
+    return betHint(this.state.sportKey(), type, { places: this.state.field()?.places });
   }
 
   private readonly currentLegs = computed(() => {
@@ -100,11 +93,11 @@ export class RaceCard {
     const s = this.state;
     const active = s.market() === 'exotic' && s.phase() === 'betting';
     if (!active || !s.legs().some(l => l.length)) return null;
-    const type = s.exoticType(), box = s.box(), legs = this.currentLegs(), field = s.field()!;
-    const base = { title: this.label(type, box), hint: this.hint(type, box), combos: 0, cost: 0, pays: 0 };
-    const err = pickError(type, legs, box, s.sport().noun);
+    const type = s.exoticType(), legs = this.currentLegs(), field = s.field()!;
+    const base = { title: this.label(type), hint: this.hint(type), combos: 0, cost: 0, pays: 0 };
+    const err = pickError(type, legs, false, s.sport().noun);
     if (err) return { ...base, err };
-    const bet = buildBet(type, legs, { stake: s.stake(), box, field });
+    const bet = buildBet(type, legs, { stake: s.stake(), box: false, field });
     return { ...base, err: null, combos: bet.combos.length, cost: betCost(bet), pays: betMaxReturn(bet, field.horses, field.places) };
   });
   protected readonly builderOn = computed(() => this.builder() !== null);
@@ -174,17 +167,11 @@ export class RaceCard {
     if (type === s.exoticType()) return;
     const wasGrid = this.orderedGrid();
     s.exoticType.set(type);
-    if (!BET_TYPES[type].boxable) s.box.set(false);
     // Keep picks where they still make sense; collapse positional picks when switching layouts.
     let legs = s.legs().map(l => l.slice());
     if (wasGrid !== this.orderedGrid()) legs = [[...new Set(legs.flat())], [], []];
     if (this.orderedGrid()) for (let i = BET_TYPES[type].size; i < 3; i++) legs[i] = [];
     s.legs.set(legs);
-  }
-
-  protected setBox(on: boolean): void {
-    this.state.box.set(on);
-    this.state.legs.update(legs => [[...new Set(legs.flat())], [], []]);
   }
 
   protected isPicked(leg: number, h: number): boolean { return this.state.legs()[leg].includes(h); }
@@ -198,8 +185,8 @@ export class RaceCard {
   protected addExotic(): void {
     const s = this.state;
     const legs = this.currentLegs();
-    if (pickError(s.exoticType(), legs, s.box(), s.sport().noun)) return;
-    const bet = buildBet(s.exoticType(), legs, { stake: s.stake(), box: s.box(), field: s.field()! });
+    if (pickError(s.exoticType(), legs, false, s.sport().noun)) return;
+    const bet = buildBet(s.exoticType(), legs, { stake: s.stake(), box: false, field: s.field()! });
     if (this.slip.addBet(bet)) this.clearPicks();
   }
 

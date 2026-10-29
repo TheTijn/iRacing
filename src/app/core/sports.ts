@@ -152,7 +152,6 @@ const TRAPS: ByRunner<Colours> = {
 export interface MarketLabel {
   label: string;
   box: string;
-  toggle: string;
 }
 
 export interface Sport {
@@ -189,12 +188,12 @@ export const SPORTS: Record<SportKey, Sport> = {
     key: 'dogs', name: 'Dogs', title: 'Greyhound racing', brand: 'Greyhounds',
     noun: 'dog', nouns: 'dogs', icon: 'trap', number: 'trap',
     surface: 'Sand', profiles: DOG_PROFILES, colours: TRAPS,
-    // UK greyhound markets: Forecast / Tricast, boxed as Reverse Forecast / Combination Tricast.
-    // Quinella is left out because Reverse Forecast covers "1st & 2nd in any order".
+    // UK greyhound markets: Forecast / Tricast. The card offers no boxed bets; the boxed names
+    // (Reverse Forecast / Combination Tricast) only title older bets in history.
     exotics: ['EXACTA', 'TRIFECTA', 'TRIO', 'SWINGER'],
     labels: {
-      EXACTA:   { label: 'Forecast', box: 'Reverse Forecast', toggle: 'Reverse' },
-      TRIFECTA: { label: 'Tricast',  box: 'Combination Tricast', toggle: 'Combo' },
+      EXACTA:   { label: 'Forecast', box: 'Reverse Forecast' },
+      TRIFECTA: { label: 'Tricast',  box: 'Combination Tricast' },
     },
     loading: 'Dogs in the traps…',
     waiting: 'A fresh field is waiting in the traps.',
@@ -231,8 +230,6 @@ export function betLabel(sport: SportKey, type: BetType, box = false): string {
   return o?.label || BET_TYPES[type].label;
 }
 
-/** Label of the any-order switch for a boxable market ('Box', or 'Reverse' for a Forecast). */
-export const boxToggleLabel = (sport: SportKey, type: BetType) => SPORTS[sport]?.labels[type]?.toggle || 'Box';
 
 /** One-line explanation of a market for this sport and field size. */
 export function betHint(sport: SportKey, type: BetType, { box = false, places = 3 }: { box?: boolean; places?: number } = {}): string {

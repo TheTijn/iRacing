@@ -29,11 +29,15 @@
         </div>
         <div class="ticket__sel" appBetSelection [bet]="b" [names]="names()"></div>
         <div class="ticket__foot">
-          <label class="ticket__stake">Stake
-            <input #stake type="text" inputmode="decimal" [value]="b.stake.toFixed(2)" [attr.aria-label]="'Stake for ' + store.title(b)"
-              (change)="ticketStake(stake, b)" (keydown.enter)="stake.blur()">
-          </label>
-          <span>Cost <b>{{ fmt.money(cost(b)) }}</b> · Up to <b>{{ fmt.money(ticketMax().get(b.id) ?? 0) }}</b></span>
+          <div class="ticket__stake">Stake
+            <span class="ticket__stepper">
+              <button class="ticket__step" [attr.aria-label]="'Lower stake for ' + store.title(b)" [disabled]="step(b, -1) === null" (click)="stepTicket(b, -1)"><svg><use href="#i-minus"/></svg></button>
+              <input #stake type="text" inputmode="decimal" [value]="b.stake.toFixed(2)" [attr.aria-label]="'Stake for ' + store.title(b)"
+                (change)="ticketStake(stake, b)" (keydown.enter)="stake.blur()">
+              <button class="ticket__step" [attr.aria-label]="'Raise stake for ' + store.title(b)" [disabled]="step(b, 1) === null" (click)="stepTicket(b, 1)"><svg><use href="#i-plus"/></svg></button>
+            </span>
+          </div>
+          <span>Pays: <b>{{ fmt.money(ticketMax().get(b.id) ?? 0) }}</b></span>
         </div>
         <button class="ticket__rm" aria-label="Remove bet" (click)="remove($event, b.id!)"><svg><use href="#i-close"/></svg></button>
       </li>
@@ -47,8 +51,15 @@
     <span class="slip__ret-label">Max return</span>
     <span #ret class="slip__ret-value">{{ fmt.money(store.maxReturn()) }}</span>
   </div>
-  <button class="btn btn--primary btn--place flex-shrink-0" [disabled]="!store.bets().length" (click)="place()">
-    <span class="btn--place__label">Place bet</span>
-    <span class="btn--place__amt">{{ fmt.money(store.cost()) }}</span>
-  </button>
+  <div class="slip__btns d-flex gap-2 flex-shrink-0">
+    @if (state.settings().autoPlay) {
+      <button class="btn btn--ghost btn--auto" [disabled]="!store.bets().length" aria-label="Auto play" (click)="ui.openSheet('auto')">
+        <svg aria-hidden="true"><use href="#i-timer"/></svg><span>Auto</span>
+      </button>
+    }
+    <button class="btn btn--primary btn--place" [disabled]="!store.bets().length" (click)="place()">
+      <span class="btn--place__label">Place bet</span>
+      <span class="btn--place__amt">{{ fmt.money(store.cost()) }}</span>
+    </button>
+  </div>
 </div>

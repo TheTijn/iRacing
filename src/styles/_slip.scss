@@ -95,11 +95,24 @@
     @include press(0.9);
     @include hover { color: var(--red); background: rgba(255, 107, 94, 0.08); }
   }
-  &__stake { display: flex; align-items: center; gap: 6px; color: var(--text-2); }
-  &__stake input {
-    width: 64px; height: 32px; border-radius: 9px; border: 1px solid var(--line-2); background: var(--surface);
-    color: var(--text); text-align: center; font: 700 13.5px var(--f-ui); @include num;
-    &:focus { outline: none; border-color: var(--accent); }
+  &__stake { display: flex; align-items: center; gap: 8px; color: var(--text-2); }
+  // − stake + : one pill; the middle still takes a typed custom amount.
+  &__stepper {
+    display: flex; align-items: center; height: 40px; border-radius: 12px;
+    border: 1px solid var(--line-2); background: var(--surface);
+    &:focus-within { border-color: var(--accent); }
+    input {
+      width: 56px; height: 100%; padding: 0; border: 0; background: none;
+      color: var(--text); text-align: center; font: 700 14px var(--f-ui); @include num;
+      &:focus { outline: none; }
+    }
+  }
+  &__step {
+    display: grid; place-items: center; width: 36px; height: 100%; border-radius: 11px; color: var(--text);
+    svg { width: 16px; height: 16px; }
+    @include press(0.9);
+    @include hover { background: var(--surface-2); }
+    &:disabled { color: var(--text-3); opacity: 0.5; }
   }
 }
 .mini-silk { display: inline-flex; align-items: center; gap: 4px; .silk { width: 18px; height: 18px; } }

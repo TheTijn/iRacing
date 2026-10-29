@@ -10,4 +10,5 @@ export const CONFIG = {
   maxBets: 20,
   finishBeatMs: 1200,    // finish-line footage shown before the result screen
   historyLimit: 50,
+  autoGapS: 3,           // auto play: seconds on each result before the next race
 } as const;
