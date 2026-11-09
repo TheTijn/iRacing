@@ -126,6 +126,8 @@ describe('pricing', () => {
       expect(settle(bet('PLACE', [[r.result[3]]]), r.result), r.id).toBe(0);
       expect(settle(bet('TRIFECTA', [[a], [b], [c]]), r.result), r.id).toBeGreaterThan(0);
       expect(settle(bet('TRIO', [[c, a, b]]), r.result), r.id).toBeGreaterThan(0);
+      expect(settle(bet('QUINELLA', [[b, a]]), r.result), r.id).toBeGreaterThan(0);
+      expect(settle(bet('QUINELLA', [[a, c]]), r.result), r.id).toBe(0);
     }
   });
 
@@ -144,6 +146,12 @@ describe('pricing', () => {
     // Swinger pair probabilities sum to 3 (each podium contains 3 pairs)
     const sw = expandCombos('SWINGER', [horses]).reduce((s, c) => s + comboProbability('SWINGER', c, p, horses), 0);
     expect(Math.abs(sw - 3)).toBeLessThan(1e-9);
+    // Quinella pairs sum to 1 (one unordered top 2), and each is its exacta both ways round
+    const qn = expandCombos('QUINELLA', [horses]).reduce((s, c) => s + comboProbability('QUINELLA', c, p), 0);
+    expect(Math.abs(qn - 1)).toBeLessThan(1e-9);
+    expect(comboProbability('QUINELLA', [3, 7], p))
+      .toBeCloseTo(comboProbability('EXACTA', [3, 7], p) + comboProbability('EXACTA', [7, 3], p), 12);
+    expect(SPORTS.dogs.exotics).toContain('QUINELLA');
     // Favourite exacta priced shorter than the reverse; caps respected
     expect(exoticPrice('EXACTA', [1, 2], p, horses)).toBeLessThan(exoticPrice('EXACTA', [2, 1], p, horses));
     expect(exoticPrice('TRIFECTA', [10, 9, 8], p, horses)).toBeLessThanOrEqual(5000);

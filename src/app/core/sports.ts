@@ -188,9 +188,10 @@ export const SPORTS: Record<SportKey, Sport> = {
     key: 'dogs', name: 'Dogs', title: 'Greyhound racing', brand: 'Greyhounds',
     noun: 'dog', nouns: 'dogs', icon: 'trap', number: 'trap',
     surface: 'Sand', profiles: DOG_PROFILES, colours: TRAPS,
-    // UK greyhound markets: Forecast / Tricast. The card offers no boxed bets; the boxed names
-    // (Reverse Forecast / Combination Tricast) only title older bets in history.
-    exotics: ['EXACTA', 'TRIFECTA', 'TRIO', 'SWINGER'],
+    // UK greyhound markets: Forecast / Tricast, plus Quinella (one bet on the top 2 in any order).
+    // The card offers no boxed bets; the boxed names (Reverse Forecast / Combination Tricast) only
+    // title older bets in history.
+    exotics: ['EXACTA', 'TRIFECTA', 'QUINELLA', 'TRIO', 'SWINGER'],
     labels: {
       EXACTA:   { label: 'Forecast', box: 'Reverse Forecast' },
       TRIFECTA: { label: 'Tricast',  box: 'Combination Tricast' },
