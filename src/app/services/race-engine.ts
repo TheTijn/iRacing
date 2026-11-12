@@ -37,7 +37,7 @@ interface Run {
 export interface LiveBetLayout {
   side?: string;
   horses: number[];
-  sep: 'ahead of' | '→' | null;
+  sep: '→' | null;
 }
 
 export interface LiveBet {
@@ -387,7 +387,6 @@ function layoutOf(b: Bet): LiveBetLayout {
   const horses = [...new Set(b.legs.flat())];
   const t = BET_TYPES[b.type];
   if (t.set) return { side: b.side, horses, sep: null };
-  if (t.pair) return { horses: b.combos[0].sel, sep: 'ahead of' };
   if (b.combos.length === 1 && b.type !== 'WIN' && b.type !== 'PLACE') return { horses: b.combos[0].sel, sep: '→' };
   return { horses, sep: null };
 }

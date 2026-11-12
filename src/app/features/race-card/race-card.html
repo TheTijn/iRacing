@@ -1,5 +1,5 @@
 @let f = state.field();
-@let isH2H = state.market() === 'h2h';
+@let isOddEven = state.market() === 'oddeven';
 <!-- Phones and lg: race header above the card. xl: header column | card column. -->
 <div class="row g-0 flex-column flex-xl-row flex-nowrap flex-grow-1 min-h-0 column-gap-xl-5">
   <div class="card-hero col-12 col-xl-5">
@@ -39,7 +39,7 @@
       </div>
     </div>
 
-    <ol #list class="runners" aria-label="Runners" [hidden]="isH2H" (scroll)="onScroll(list)">
+    <ol #list class="runners" aria-label="Runners" [hidden]="isOddEven" (scroll)="onScroll(list)">
       @if (f) {
         <!-- Trap / saddle order (1, 2, 3…), like a printed racecard -->
         @for (no of f.horses; track no) {
@@ -92,19 +92,10 @@
       }
     </ol>
 
-    <div #h2h class="h2h" [hidden]="!isH2H" (scroll)="onScroll(h2h)">
-      <section class="h2h__group">
-        @for (m of matches(); track m.id) {
-          <div class="h2h__match row g-0 align-items-end">
-            <ng-container *ngTemplateOutlet="matchSide; context: { $implicit: m.start, end: false }" />
-            <div class="h2h__vs col-auto">vs</div>
-            <ng-container *ngTemplateOutlet="matchSide; context: { $implicit: m.end, end: true }" />
-          </div>
-        }
-      </section>
-      <section class="h2h__group">
+    <div #oddEven class="oddeven" [hidden]="!isOddEven" (scroll)="onScroll(oddEven)">
+      <section class="oddeven__group">
         @for (set of setMarkets(); track set.type) {
-          <div class="h2h__set row g-2">
+          <div class="oddeven__set row g-2">
             @for (s of set.sides; track s.side) {
               <div class="col-6">
                 <button class="mkt w-100 d-flex align-items-center justify-content-between gap-2" [class.is-on]="slip.hasKey(s.key)"
@@ -145,21 +136,3 @@
     </div>
   </div>
 </div>
-
-<ng-template #matchSide let-s let-end="end">
-  <div class="h2h__side col d-flex flex-column gap-2 min-w-0" [class.h2h__side--start]="!end" [class.h2h__side--end]="end">
-    <div class="h2h__who d-flex align-items-center gap-2 min-w-0">
-      <span class="h2h__rank flex-shrink-0">F{{ s.rank }}</span><span class="h2h__name text-truncate">{{ s.name }}</span>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-      <span class="h2h__silk flex-shrink-0">
-        <svg appRunnerIcon [no]="s.no"></svg>
-        @if (saddles()) { <span class="saddle">{{ s.no }}</span> }
-      </span>
-      <button class="odd odd--wide flex-grow-1" [class.is-on]="slip.hasKey(s.key)" [attr.aria-pressed]="slip.hasKey(s.key)"
-        [attr.aria-label]="s.name + ' to finish ahead of ' + s.rival + ' at ' + fmt.odds(s.price)" (click)="toggleBet(s.bet)">
-        <span class="odd__price">{{ fmt.odds(s.price) }}</span>
-      </button>
-    </div>
-  </div>
-</ng-template>

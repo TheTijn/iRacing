@@ -7,7 +7,7 @@ import { RunnerIcon } from './runner-icon';
 type Selection = Pick<Bet, 'type' | 'box' | 'side' | 'legs'>;
 
 /**
- * A bet's selection as runner chips: '#3 Name', '#1 ahead of #2', '#1 → #4', 'Odd' + chips, …
+ * A bet's selection as runner chips: '#3 Name', '#1 → #4', 'Odd' + chips, …
  * Shared by the betslip, result screen and history. Goes on the (flex) container element:
  * `<div class="ticket__sel" appBetSelection [bet]="b" [names]="names"></div>`.
  */
@@ -26,11 +26,6 @@ type Selection = Pick<Bet, 'type' | 'box' | 'side' | 'legs'>;
       @case ('set') {
         <span class="sel-side">{{ b.side }}</span>
         @for (h of b.legs[0]; track h) { <span class="mini-silk"><svg appRunnerIcon [no]="h" [sport]="sport()"></svg></span> }
-      }
-      @case ('pair') {
-        <ng-container *ngTemplateOutlet="tag; context: { $implicit: b.legs[0][0], showName: true }" />
-        <span class="sep">ahead of</span>
-        <ng-container *ngTemplateOutlet="tag; context: { $implicit: b.legs[1][0], showName: false }" />
       }
       @case ('single') {
         <ng-container *ngTemplateOutlet="tag; context: { $implicit: b.legs[0][0], showName: true }" />
@@ -64,7 +59,6 @@ export class BetSelection {
     const { type, box } = this.bet();
     const t = BET_TYPES[type];
     if (t.set) return 'set';
-    if (t.pair) return 'pair';
     if (t.size === 1) return 'single';
     return t.ordered && !box ? 'ordered' : 'any';
   });

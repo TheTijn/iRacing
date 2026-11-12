@@ -2,8 +2,7 @@ import {
   ChangeDetectionStrategy, Component, ElementRef, Injector, afterNextRender, computed, effect, inject, linkedSignal,
   signal, untracked, viewChild,
 } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
-import { BET_TYPES, SET_SIDES, betCost, betMaxReturn, buildBet, h2hPairs, pickError } from '../../core/pricing';
+import { BET_TYPES, SET_SIDES, betCost, betMaxReturn, buildBet, pickError } from '../../core/pricing';
 import { betHint, betLabel } from '../../core/sports';
 import type { Bet, BetType, Market, SetSide } from '../../core/models';
 import { BetslipStore, betKey } from '../../services/betslip-store';
@@ -26,13 +25,13 @@ interface BuilderView {
 }
 
 /**
- * Race card: race header, market tabs (Win & Place, Exotics, Head to Head), the runner list with Win/Place
- * prices or exotic pick toggles, the exotic builder bar, and the Head to Head panel.
+ * Race card: race header, market tabs (Win & Place, Exotics, Odd/Even), the runner list with Win/Place
+ * prices or exotic pick toggles, the exotic builder bar, and the Odd/Even panel.
  */
 @Component({
   selector: 'section[app-race-card]',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgTemplateOutlet, RunnerIcon],
+  imports: [RunnerIcon],
   host: {
     class: 'view view--card',
     'aria-label': 'Race card',
@@ -50,12 +49,12 @@ export class RaceCard {
   private readonly injector = inject(Injector);
 
   private readonly list = viewChild.required<ElementRef<HTMLElement>>('list');
-  private readonly h2hPanel = viewChild.required<ElementRef<HTMLElement>>('h2h');
+  private readonly oddEvenPanel = viewChild.required<ElementRef<HTMLElement>>('oddEven');
 
   protected readonly markets: { key: Market; label: string }[] = [
     { key: 'wp', label: 'Win & Place' },
     { key: 'exotic', label: 'Exotics' },
-    { key: 'h2h', label: 'Head to Head' },
+    { key: 'oddeven', label: 'Odd/Even' },
   ];
   protected readonly stars = STARS;
 
@@ -107,20 +106,8 @@ export class RaceCard {
     computation: (b, prev) => b ?? prev?.value ?? null,
   });
 
-  // ---------- Head to Head ----------
-  // Matchups between neighbouring favourites (F1 v F2, F2 v F3, F3 v F4), and two winner markets on the
-  // winning number: Odd / Even and High / Low. Each price button toggles one bet on the slip.
-  protected readonly matches = computed(() => {
-    const f = this.state.field();
-    if (!f) return [];
-    const stake = this.state.stake();
-    const side = (a: number, b: number) => {
-      const bet = buildBet('H2H', [[a], [b]], { stake, field: f });
-      return { no: a, rank: f.byOdds.indexOf(a) + 1, name: f.runners[a].name, rival: f.runners[b].name, bet, key: betKey(bet), price: bet.combos[0].price };
-    };
-    return h2hPairs(f).map(([a, b]) => ({ id: `${a}-${b}`, start: side(a, b), end: side(b, a) }));
-  });
-
+  // ---------- Odd/Even ----------
+  // Two winner markets on the winning number: Odd / Even and High / Low. Each price button toggles one bet on the slip.
   protected readonly setMarkets = computed(() => {
     const f = this.state.field();
     if (!f) return [];
@@ -143,11 +130,11 @@ export class RaceCard {
   }
 
   private intro(): void {
-    const list = this.list().nativeElement, h2h = this.h2hPanel().nativeElement;
-    list.scrollTop = h2h.scrollTop = 0;
+    const list = this.list().nativeElement, oddEven = this.oddEvenPanel().nativeElement;
+    list.scrollTop = oddEven.scrollTop = 0;
     this.compact.set(false);
     if (this.motion.reducedMotion()) return;
-    const rows = this.state.market() === 'h2h' ? h2h.querySelectorAll('.h2h__match, .h2h__set') : list.children;
+    const rows = this.state.market() === 'oddeven' ? oddEven.querySelectorAll('.oddeven__set') : list.children;
     gsap.fromTo(rows, { y: 14, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'expo.out', stagger: 0.035, clearProps: 'transform,opacity' });
   }
 

@@ -3,9 +3,9 @@
 export type SportKey = 'dogs' | 'horses';
 export type GameKey = 'crawford' | 'summerset' | 'milnerton';
 export type Phase = 'loading' | 'lobby' | 'betting' | 'racing' | 'result';
-export type Market = 'wp' | 'exotic' | 'h2h';
+export type Market = 'wp' | 'exotic' | 'oddeven';
 export type BetType =
-  | 'WIN' | 'PLACE' | 'EXACTA' | 'TRIFECTA' | 'QUINELLA' | 'TRIO' | 'SWINGER' | 'H2H' | 'ODDEVEN' | 'HILO';
+  | 'WIN' | 'PLACE' | 'EXACTA' | 'TRIFECTA' | 'QUINELLA' | 'TRIO' | 'SWINGER' | 'ODDEVEN' | 'HILO';
 export type SetSide = 'Odd' | 'Even' | 'High' | 'Low';
 export type LiveState = 'winning' | 'close' | 'out';
 export type OddsFormat = 'decimal' | 'fractional' | 'american';

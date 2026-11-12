@@ -4,7 +4,7 @@ import type { Race } from './models';
 import {
   expandCombos, pickError, buildBet, settle, betCost, maxReturn, liveState, winProbs,
   comboProbability, exoticPrice, formatOdds, toAmerican, toFractional, placesFor, EXOTICS,
-  h2hPairs, aheadProb, winnerSets, MATCH_BOOK, SET_SIDES, round2,
+  winnerSets, MATCH_BOOK, SET_SIDES, round2,
 } from './pricing';
 import { SPORTS, GAMES, gameRaces } from './sports';
 import { buildField } from './field';
@@ -216,26 +216,8 @@ describe('pricing', () => {
   });
 });
 
-// ---------- Head to Head tab ----------
-describe('head to head markets', () => {
-  it('prices and settles matchups', () => {
-    expect(h2hPairs(field)).toEqual([[1, 2], [2, 3], [3, 4]]);   // F1 v F2, F2 v F3, F3 v F4
-    const p = winProbs(field.win);
-    for (const [a, b] of h2hPairs(field)) {
-      expect(Math.abs(aheadProb(a, b, p) + aheadProb(b, a, p) - 1)).toBeLessThan(1e-12);
-      const book = 1 / bet('H2H', [[a], [b]]).combos[0].price + 1 / bet('H2H', [[b], [a]]).combos[0].price;
-      expect(Math.abs(book - MATCH_BOOK), `${a} v ${b}: book ${book}`).toBeLessThan(0.01);
-      expect(bet('H2H', [[a], [b]]).combos[0].price, 'favourite is shorter').toBeLessThan(bet('H2H', [[b], [a]]).combos[0].price);
-    }
-    const order = [5, 3, 1, 9, 2, 4, 6, 7, 8, 10];
-    expect(settle(bet('H2H', [[1], [2]], false, 10), order)).toBeGreaterThan(10);   // 1 is 3rd, 2 is 5th
-    expect(settle(bet('H2H', [[2], [1]]), order)).toBe(0);
-    expect(settle(bet('H2H', [[2], [4]]), order), 'both outside the podium').toBeGreaterThan(0);
-    // A partial order: the runner missing from it finished behind
-    expect(settle(bet('H2H', [[1], [2]]), [5, 3, 1])).toBeGreaterThan(0);
-    expect(settle(bet('H2H', [[2], [4]]), [5, 3, 1])).toBe(0);
-  });
-
+// ---------- Odd/Even tab ----------
+describe('odd/even markets', () => {
   it('prices odd/even and high/low on the winning number', () => {
     expect(winnerSets([1, 2, 3, 4, 5, 6])).toEqual({ Odd: [1, 3, 5], Even: [2, 4, 6], Low: [1, 2, 3], High: [4, 5, 6] });
     expect(winnerSets([1, 2, 3, 4, 5, 6, 7, 8]).High).toEqual([5, 6, 7, 8]);
@@ -253,20 +235,9 @@ describe('head to head markets', () => {
     expect(settle(high, [6, 1, 2])).toBeGreaterThan(0);
     expect(settle(high, [5, 6, 7])).toBe(0);   // 1–5 is Low in a ten-runner field
     expect(liveState(odd, [2, 1, 4, 3, 5, 6, 7, 8, 9, 10])).toBe('close');
-  });
-
-  it('keeps max return exact with head to head bets', () => {
-    const a = bet('H2H', [[1], [2]], false, 10), b = bet('H2H', [[2], [1]], false, 10);
-    expect(maxReturn([a, b], horses), 'opposite sides never both pay').toBe(Math.max(settle(a, [1, 2]), settle(b, [2, 1])));
-    const c = bet('H2H', [[3], [4]], false, 10);
-    expect(maxReturn([a, c], horses)).toBe(round2(settle(a, [1, 2]) + settle(c, [3, 4])));
-    // Win on 2 + H2H 1 over 2 can't both land
-    const w2 = bet('WIN', [[2]], false, 10);
-    expect(maxReturn([w2, a], horses)).toBe(Math.max(settle(w2, [2]), settle(a, [1, 2])));
-    // Head to head is decided behind the podium too: 9 wins, and 1 can still beat 2 in 4th/5th
-    const w9 = bet('WIN', [[9]], false, 10);
-    expect(maxReturn([w9, a], horses)).toBe(round2(settle(w9, [9]) + settle(a, [1, 2])));
-    expect(liveState(a, [5, 6, 7, 8, 2, 1, 3, 4, 9, 10]), 'one overtake anywhere in the field').toBe('close');
+    // Odd and Even never both pay
+    const even = buildBet('ODDEVEN', [], { stake: 10, field, side: 'Even' });
+    expect(maxReturn([odd, even], horses)).toBe(Math.max(settle(odd, [1]), settle(even, [2])));
   });
 });
 

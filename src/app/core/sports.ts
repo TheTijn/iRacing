@@ -244,7 +244,6 @@ export function betHint(sport: SportKey, type: BetType, { box = false, places = 
     case 'QUINELLA': return '1st & 2nd in any order';
     case 'TRIO': return 'Top 3 in any order';
     case 'SWINGER': return `2 ${nouns} both in the top 3`;
-    case 'H2H': return `Which ${noun} finishes ahead?`;
     case 'ODDEVEN': case 'HILO': return `Winning ${SPORTS[sport].number} number`;
     default: return '';
   }

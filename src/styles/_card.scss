@@ -51,7 +51,7 @@
     transition: transform 280ms $ease-out;
   }
   &[data-active='exotic'] &__thumb { transform: translateX(100%); }
-  &[data-active='h2h'] &__thumb { transform: translateX(200%); }
+  &[data-active='oddeven'] &__thumb { transform: translateX(200%); }
   &__btn {
     position: relative; height: 40px; padding: 0 4px; border-radius: 10px; font-weight: 650; font-size: 14px; color: var(--text-3);
     white-space: nowrap; transition: color 200ms ease;
