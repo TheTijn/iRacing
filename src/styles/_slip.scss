@@ -34,7 +34,8 @@
   &.is-open &__chev { transform: rotate(180deg); }
 
   &__panel { height: 0; overflow: hidden; }
-  &__stake { padding: 10px 16px 6px; }
+  // Pinned above the foot (the tickets scroll): chips, Place bet and Auto all sit in thumb reach.
+  &__stake { flex: none; padding: 10px 16px 6px; border-top: 1px solid var(--line); }
   &__stake-label { @include label(10px); display: block; margin-bottom: 8px; }
   &__clear {
     height: 40px; padding: 0 14px; margin: 2px 0 4px;

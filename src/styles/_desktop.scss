@@ -63,7 +63,7 @@ $app-h: min(100dvh, #{$app-max-h});   // the app's height; layout maths uses thi
     &__grip, &__chev { display: none; }
     &__top b { font-size: 18px; }
     &__panel { height: auto !important; flex: 1; min-height: 0; }
-    &__stake { padding: 14px 16px 6px; }
+    &__stake { padding: 12px 16px 4px; }
     &__foot { flex-wrap: wrap; padding: 14px 16px 16px; border-top: 1px solid var(--line); }
     &__ret-value { font-size: 34px; }
     &__empty {
